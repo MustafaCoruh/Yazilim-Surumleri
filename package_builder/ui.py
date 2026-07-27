@@ -61,12 +61,6 @@ class Application(tk.Tk):
         bin_path = tk.StringVar()
         output_path = tk.StringVar()
 
-        def row(label: str, variable: tk.StringVar, command) -> None:
-            index = len(form.grid_slaves()) // 3
-            ttk.Label(form, text=label).grid(row=index, column=0, sticky="w", padx=(0, 16), pady=9)
-            ttk.Entry(form, textvariable=variable, state="readonly").grid(row=index, column=1, sticky="ew", pady=9)
-            ttk.Button(form, text="Seç…", command=command).grid(row=index, column=2, padx=(10, 0), pady=9)
-
         ttk.Label(form, text="Yazılım").grid(row=0, column=0, sticky="w", padx=(0, 16), pady=9)
         software_box = ttk.Combobox(form, textvariable=software, values=[x.value for x in Software], state="readonly")
         software_box.grid(row=0, column=1, sticky="ew", pady=9)
@@ -85,6 +79,7 @@ class Application(tk.Tk):
             aircraft_box.configure(state="readonly" if software.get() == Software.AKY.value else "disabled")
         software.trace_add("write", software_changed)
         status = tk.StringVar(value="Hazır")
+        progress = ttk.Progressbar(frame, mode="indeterminate")
 
         def build() -> None:
             if not bin_path.get() or not output_path.get():
@@ -92,6 +87,8 @@ class Application(tk.Tk):
                 return
             button.configure(state="disabled")
             status.set("Paketler hazırlanıyor…")
+            progress.pack(fill="x", pady=(16, 0), before=footer)
+            progress.start(12)
             request = BuildRequest(Software(software.get()), Path(bin_path.get()), Path(output_path.get()),
                                    Aircraft(aircraft.get()) if software.get() == Software.AKY.value else None)
             def worker() -> None:
@@ -104,6 +101,8 @@ class Application(tk.Tk):
                     self.after(0, lambda: messagebox.showinfo("Tamamlandı", f"{len(outputs)} paket oluşturuldu."))
                     self.after(0, lambda: status.set("Paketler başarıyla oluşturuldu"))
                 finally:
+                    self.after(0, progress.stop)
+                    self.after(0, progress.pack_forget)
                     self.after(0, lambda: button.configure(state="normal"))
             threading.Thread(target=worker, daemon=True).start()
 
@@ -137,7 +136,7 @@ class Application(tk.Tk):
             for sw in Software:
                 for st in STATIONS:
                     path = entries.get(f"{sw.value}/{st}")
-                    tree.insert("", "end", values=(sw.value, st, str(path) if path and path.is_dir() else "Yüklenmedi"))
+                    tree.insert("", "end", values=(sw.value, st, str(path) if path and path.is_dir() else "— Eksik —"))
 
         def save() -> None:
             source = filedialog.askdirectory(title="Config klasörünü seçin")

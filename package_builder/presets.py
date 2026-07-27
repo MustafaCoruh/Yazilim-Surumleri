@@ -48,11 +48,20 @@ class PresetStore:
         destination = self.root / "configs" / software.value / station
         destination.parent.mkdir(parents=True, exist_ok=True)
         temporary = Path(tempfile.mkdtemp(prefix=f".{station}-", dir=destination.parent))
+        backup = destination.with_name(f".{destination.name}.backup")
         try:
             shutil.copytree(source, temporary / "content")
+            if backup.exists():
+                shutil.rmtree(backup)
             if destination.exists():
-                shutil.rmtree(destination)
-            (temporary / "content").replace(destination)
+                destination.replace(backup)
+            try:
+                (temporary / "content").replace(destination)
+            except Exception:
+                if backup.exists():
+                    backup.replace(destination)
+                raise
+            shutil.rmtree(backup, ignore_errors=True)
         finally:
             shutil.rmtree(temporary, ignore_errors=True)
         index = self._read_index()

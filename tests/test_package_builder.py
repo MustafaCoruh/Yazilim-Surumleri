@@ -7,6 +7,7 @@ from package_builder.builder import PackageBuilder, package_name, version_from_b
 from package_builder.errors import PresetError, ValidationError, XmlConfigurationError
 from package_builder.models import Aircraft, BuildRequest, Software
 from package_builder.presets import PresetStore
+from package_builder.xml_config import configure_package
 
 
 USER = """<?xml version="1.0" encoding="utf-8"?>
@@ -115,3 +116,21 @@ def test_xml_exactly_once(tmp_path, mode):
     with pytest.raises(XmlConfigurationError, match="ConfigFileLocation"):
         PackageBuilder(store).build(BuildRequest(Software.DM, binary, tmp_path / "out"))
     assert not list((tmp_path / "out").glob("DM_*"))
+
+
+@pytest.mark.parametrize("encoding,bom", [("utf-8-sig", b"\xef\xbb\xbf"), ("utf-16", b"\xff\xfe")])
+def test_xml_encoding_declaration_and_extensionless_name_are_preserved(tmp_path, encoding, bom):
+    directory = tmp_path / "config"
+    directory.mkdir()
+    user = directory / "UserConfiguration"
+    app = directory / "AppSettings.xml"
+    declaration_encoding = "utf-16" if encoding == "utf-16" else "utf-8"
+    user.write_text(USER.replace('encoding="utf-8"', f'encoding="{declaration_encoding}"'), encoding=encoding)
+    app.write_text(APP.replace('encoding="utf-8"', f'encoding="{declaration_encoding}"'), encoding=encoding)
+
+    configure_package(Software.SYY, directory, "SYY_1.0_SYKI1", "bin_1.0", None)
+
+    assert user.read_bytes().startswith(bom)
+    assert app.read_bytes().startswith(bom)
+    assert "ConfigFileLocation" in user.read_text(encoding=encoding)
+    assert "GainsParamsTable_MessageTable_7.41.csv" in app.read_text(encoding=encoding)

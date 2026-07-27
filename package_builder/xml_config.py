@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import re
+import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -32,11 +33,20 @@ def find_xml_file(config: Path, kind: str, package_name: str) -> Path:
     return matches[0]
 
 
-def _encoding_and_declaration(path: Path) -> tuple[str, bool]:
+def _encoding_and_declaration(path: Path) -> tuple[str, bool, bytes]:
     raw = path.read_bytes()[:256]
-    declaration = raw.lstrip().startswith(b"<?xml")
-    match = re.search(br"encoding=[\"']([^\"']+)", raw, re.IGNORECASE)
-    return (match.group(1).decode("ascii") if match else "utf-8", declaration)
+    if raw.startswith(b"\xef\xbb\xbf"):
+        encoding, bom = "utf-8", b"\xef\xbb\xbf"
+    elif raw.startswith((b"\xff\xfe", b"\xfe\xff")):
+        encoding = "utf-16-le" if raw.startswith(b"\xff\xfe") else "utf-16-be"
+        bom = raw[:2]
+    else:
+        encoding, bom = "utf-8", b""
+    inspected = raw.decode(encoding, errors="ignore").lstrip("\ufeff")
+    declaration = inspected.lstrip().startswith("<?xml")
+    match = re.search(r"encoding=[\"']([^\"']+)", inspected, re.IGNORECASE)
+    declared = match.group(1) if match else encoding
+    return (encoding if bom in (b"\xff\xfe", b"\xfe\xff") else declared, declaration, bom)
 
 
 def _set_exact(root: ET.Element, field: str, value: str, package: str, file: Path) -> None:
@@ -58,7 +68,7 @@ def _set_exact(root: ET.Element, field: str, value: str, package: str, file: Pat
 
 
 def _update(path: Path, values: dict[str, str], package: str) -> None:
-    encoding, declaration = _encoding_and_declaration(path)
+    encoding, declaration, bom = _encoding_and_declaration(path)
     try:
         tree = ET.parse(path)
     except (ET.ParseError, OSError) as exc:
@@ -66,8 +76,15 @@ def _update(path: Path, values: dict[str, str], package: str) -> None:
     for field, value in values.items():
         _set_exact(tree.getroot(), field, value, package, path)
     try:
-        tree.write(path, encoding=encoding, xml_declaration=declaration)
-    except (LookupError, OSError) as exc:
+        with tempfile.NamedTemporaryFile(dir=path.parent, prefix=f".{path.name}-", delete=False) as stream:
+            temporary = Path(stream.name)
+            if bom:
+                stream.write(bom)
+            tree.write(stream, encoding=encoding, xml_declaration=declaration)
+        temporary.replace(path)
+    except (LookupError, OSError, UnicodeError) as exc:
+        if "temporary" in locals():
+            temporary.unlink(missing_ok=True)
         raise XmlConfigurationError(f"{package}: {path.name} XML dosyası yazılamadı: {exc}") from exc
 
 

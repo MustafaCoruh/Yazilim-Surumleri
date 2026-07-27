@@ -27,7 +27,8 @@ python -m package_builder
 
 ```powershell
 pip install -e .[dev]
-pyinstaller --noconfirm --clean --windowed --name YazilimSurumleri package_builder\__main__.py
+pyinstaller --noconfirm --clean --windowed --name YazilimSurumleri yazilim_surumleri.py
 ```
 
 Çalıştırılabilir uygulama `dist\YazilimSurumleri\YazilimSurumleri.exe` konumunda oluşur. Dağıtım için `dist\YazilimSurumleri` klasörünü bütünüyle teslim edin.
+GitHub Actions içindeki **Windows** iş akışı her gönderimde testleri Windows üzerinde çalıştırır ve aynı klasörü indirilebilir `YazilimSurumleri-windows` artefaktı olarak üretir.
