@@ -2,6 +2,18 @@
 
 Windows için SYY, DM ve AKY dağıtım paketlerini güvenli biçimde hazırlayan masaüstü uygulamasıdır.
 
+## Uygulamayı çalıştırma
+
+Depoyu VS Code ile açtıktan sonra en kolay yöntem depo kökündeki `calistir.bat` dosyasına çift tıklamaktır. Betik ilk çalıştırmada `.venv` ortamını oluşturur ve uygulamayı açar; ayrıca paket kurulumu gerekmez. Python 3.11 veya üstünün kurulu olması gerekir.
+
+VS Code terminalinden çalıştırmak için:
+
+```powershell
+.\calistir.bat
+```
+
+Kaynak giriş dosyası depo kökündeki `yazilim_surumleri.py` dosyasıdır. Paketlenmiş uygulamada çalıştırılacak dosya `YazilimSurumleri.exe` olur.
+
 ## Kullanım
 
 1. Uygulamayı açıp **Ön Ayar Yönetimi** ekranına geçin.
@@ -24,6 +36,14 @@ python -m package_builder
 ```
 
 ## Windows dağıtımı
+
+Testleri çalıştırıp Windows paketini ve ZIP dosyasını tek komutla üretmek için:
+
+```powershell
+.\build_windows.ps1
+```
+
+ZIP çıktısı `release\YazilimSurumleri-windows.zip` altında oluşur. Elle PyInstaller çalıştırmak için:
 
 ```powershell
 pip install -e .[dev]
