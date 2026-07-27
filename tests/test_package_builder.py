@@ -5,8 +5,9 @@ import pytest
 
 from package_builder.builder import PackageBuilder, package_name, version_from_bin
 from package_builder.errors import PresetError, ValidationError, XmlConfigurationError
-from package_builder.models import Aircraft, BuildRequest, Software
+from package_builder.models import DEFAULT_STATIONS, Aircraft, BuildRequest, Software, output_stations
 from package_builder.presets import PresetStore
+from package_builder.settings import StationStore
 from package_builder.xml_config import configure_package
 
 
@@ -53,7 +54,7 @@ def test_output_names():
 
 def prepare(tmp_path: Path, software: Software):
     store = PresetStore(tmp_path / "data")
-    for station in ("SYKI1", "SYKI2", "MYKI15", "MYKI19", "MYKI20"):
+    for station in output_stations(software, DEFAULT_STATIONS):
         store.save(software, station, config(tmp_path / f"source-{station}"))
     binary = tmp_path / "bin_2.5.1"
     binary.mkdir()
@@ -146,3 +147,55 @@ def test_invalid_preset_is_rejected_before_being_saved(tmp_path):
         store.save(Software.DM, "SYKI1", source)
 
     assert store.get(Software.DM, "SYKI1") is None
+
+
+def test_single_station_selection_and_optional_zip(tmp_path):
+    store, binary = prepare(tmp_path, Software.SYY)
+    output = tmp_path / "out"
+
+    results = PackageBuilder(store).build(
+        BuildRequest(Software.SYY, binary, output, stations=("MYKI19",), create_zip=True)
+    )
+
+    assert [path.name for path in results] == ["SYY_2.5.1_MYKI19"]
+    assert results[0].is_dir()
+    assert (output / "SYY_2.5.1_MYKI19.zip").is_file()
+    assert not (output / "SYY_2.5.1_SYKI1").exists()
+
+
+def test_dm_and_aky_use_one_common_syki_preset(tmp_path):
+    for software in (Software.DM, Software.AKY):
+        store, binary = prepare(tmp_path / software.value, software)
+        request = BuildRequest(
+            software, binary, tmp_path / software.value / "out",
+            Aircraft.ANKA if software is Software.AKY else None,
+            stations=("SYKI1-2",),
+        )
+        outputs = PackageBuilder(store).build(request)
+        assert len(outputs) == 1
+        assert outputs[0].name.endswith("_SYKI1-2")
+
+
+def test_dynamic_station_store_and_output_model(tmp_path):
+    stations = StationStore(tmp_path).add("MYKI21")
+    assert stations[-1] == "MYKI21"
+    assert "MYKI21" in output_stations(Software.SYY, stations)
+    assert "MYKI21" in output_stations(Software.DM, stations)
+    with pytest.raises(ValidationError):
+        StationStore(tmp_path).add("MYK19")
+
+
+def test_existing_zip_is_not_overwritten(tmp_path):
+    store, binary = prepare(tmp_path, Software.SYY)
+    output = tmp_path / "out"
+    output.mkdir()
+    existing = output / "SYY_2.5.1_MYKI20.zip"
+    existing.write_bytes(b"keep")
+
+    with pytest.raises(ValidationError, match="ZIP çıktıları ezilmeyecek"):
+        PackageBuilder(store).build(
+            BuildRequest(Software.SYY, binary, output, stations=("MYKI20",), create_zip=True)
+        )
+
+    assert existing.read_bytes() == b"keep"
+    assert not (output / "SYY_2.5.1_MYKI20").exists()

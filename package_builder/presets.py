@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 from .errors import PresetError
-from .models import STATIONS, Software
+from .models import Software
 from .xml_config import validate_config_preset
 
 
@@ -16,8 +16,8 @@ class PresetStore:
         self._index_path = self.root / "presets.json"
 
     def _key(self, software: Software, station: str) -> str:
-        if station not in STATIONS:
-            raise PresetError(f"Geçersiz YKİ: {station}")
+        if not station:
+            raise PresetError("YKİ boş olamaz.")
         return f"{software.value}/{station}"
 
     def _read_index(self) -> dict[str, str]:

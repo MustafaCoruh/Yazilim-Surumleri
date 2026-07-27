@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 from .errors import PresetError, ValidationError
-from .models import BuildRequest, Software, output_stations
+from .models import DEFAULT_STATIONS, BuildRequest, Software, output_stations
 from .presets import PresetStore
 from .xml_config import configure_package
 
@@ -31,28 +31,30 @@ def package_name(software: Software, version: str, station: str, aircraft=None) 
 
 
 class PackageBuilder:
-    def __init__(self, presets: PresetStore):
+    def __init__(self, presets: PresetStore, stations: tuple[str, ...] = DEFAULT_STATIONS):
         self.presets = presets
+        self.stations = stations
 
     def build(self, request: BuildRequest) -> list[Path]:
         version = version_from_bin(request.bin_directory)
         if request.software is Software.AKY and request.aircraft is None:
             raise ValidationError("AKY için hava aracı seçilmelidir.")
         request.output_directory.mkdir(parents=True, exist_ok=True)
+        available = output_stations(request.software, self.stations)
+        selected = request.stations or available
+        if len(selected) != len(set(selected)):
+            raise ValidationError("Aynı YKİ birden fazla kez seçilemez.")
+        invalid = [station for station in selected if station not in available]
+        if invalid:
+            raise ValidationError(f"Geçersiz çıktı YKİ seçimi: {', '.join(invalid)}")
         jobs: list[tuple[str, Path]] = []
         missing: list[str] = []
-        for output_station, source_stations in output_stations(request.software):
-            sources = [self.presets.get(request.software, station) for station in source_stations]
-            absent = [station for station, source in zip(source_stations, sources) if source is None]
-            if absent:
-                missing.extend(absent)
+        for output_station in selected:
+            preset = self.presets.get(request.software, output_station)
+            if preset is None:
+                missing.append(output_station)
                 continue
-            selected = sources[0]
-            if len(sources) == 2 and not _directories_equal(sources[0], sources[1]):
-                raise PresetError(
-                    f"{request.software.value} SYKI1 ve SYKI2 ön ayarları ortak çıktı için aynı olmalıdır."
-                )
-            jobs.append((package_name(request.software, version, output_station, request.aircraft), selected))
+            jobs.append((package_name(request.software, version, output_station, request.aircraft), preset))
         if missing:
             raise PresetError(
                 f"{request.software.value} için eksik config ön ayarları: {', '.join(missing)}. "
@@ -61,9 +63,13 @@ class PackageBuilder:
         collisions = [name for name, _ in jobs if (request.output_directory / name).exists()]
         if collisions:
             raise ValidationError(f"Mevcut çıktılar ezilmeyecek: {', '.join(collisions)}")
+        zip_collisions = [f"{name}.zip" for name, _ in jobs if request.create_zip and (request.output_directory / f"{name}.zip").exists()]
+        if zip_collisions:
+            raise ValidationError(f"Mevcut ZIP çıktıları ezilmeyecek: {', '.join(zip_collisions)}")
 
         staging = Path(tempfile.mkdtemp(prefix=".paket-", dir=request.output_directory))
         completed: list[Path] = []
+        package_directories: list[Path] = []
         try:
             for name, preset in jobs:
                 package = staging / name
@@ -73,20 +79,24 @@ class PackageBuilder:
                     request.software, package / "config", name,
                     request.bin_directory.name, request.aircraft,
                 )
+                if request.create_zip:
+                    shutil.make_archive(str(staging / name), "zip", staging, name)
             for name, _ in jobs:
                 destination = request.output_directory / name
                 (staging / name).replace(destination)
                 completed.append(destination)
-            return completed
+                package_directories.append(destination)
+                if request.create_zip:
+                    zip_destination = request.output_directory / f"{name}.zip"
+                    (staging / f"{name}.zip").replace(zip_destination)
+                    completed.append(zip_destination)
+            return package_directories
         except Exception:
             for destination in completed:
-                shutil.rmtree(destination, ignore_errors=True)
+                if destination.is_dir():
+                    shutil.rmtree(destination, ignore_errors=True)
+                else:
+                    destination.unlink(missing_ok=True)
             raise
         finally:
             shutil.rmtree(staging, ignore_errors=True)
-
-
-def _directories_equal(left: Path, right: Path) -> bool:
-    def snapshot(root: Path) -> dict[str, bytes]:
-        return {p.relative_to(root).as_posix(): p.read_bytes() for p in root.rglob("*") if p.is_file()}
-    return snapshot(left) == snapshot(right)

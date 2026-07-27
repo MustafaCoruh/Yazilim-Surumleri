@@ -19,11 +19,17 @@ Kaynak giriş dosyası depo kökündeki `yazilim_surumleri.py` dosyasıdır. Pak
 ## Kullanım
 
 1. Uygulamayı açıp **Ön Ayar Yönetimi** ekranına geçin.
-2. Her yazılım ve YKİ çifti için config klasörünü **Yükle / Güncelle** ile kaydedin. Gerekli XML dosyaları ve alanları yükleme sırasında doğrulanır. Ön ayarlar `%LOCALAPPDATA%\TAI\YazilimSurumleri` altında kalıcı olarak tutulur; kaynak klasör sonradan gerekli değildir.
+2. Her yazılım ve YKİ çifti için doğrudan config klasörünü **Yükle / Güncelle** ile seçin. DM ve AKY için SYKI config'i tek `SYKI1-2` ön ayarı olarak yüklenir. Gerekli XML dosyaları ve alanları yükleme sırasında doğrulanır. Ön ayarlar `%LOCALAPPDATA%\TAI\YazilimSurumleri` altında kalıcı olarak tutulur; kaynak klasör sonradan gerekli değildir.
 3. **Paket Oluştur** ekranında SYY, DM veya AKY seçin. AKY için ayrıca ANKA, AKSUNGUR ya da ANKA3 seçin.
-4. Tam adı `bin_1.2.3` benzeri olan bin klasörünü ve boş bir çıktı konumunu seçip **Paketleri Oluştur** düğmesine basın.
+4. Üretilecek YKİ listesinden tek bir YKİ veya **Tümü** seçeneğini belirleyin.
+5. Tam adı `bin_1.2.3` benzeri olan bin klasörünü ve boş bir çıktı konumunu seçip **Paketleri Oluştur** düğmesine basın.
+6. Sorulduğunda normal çıktı klasörlerine ek olarak ZIP dosyaları isteyip istemediğinizi belirtin.
 
-SYY beş YKİ için ayrı paket üretir. DM ve AKY, SYKI1/SYKI2 için ortak `SYKI1-2` paketi ve üç MYKI için ayrı paket üretir. Ortak pakette SYKI1 ve SYKI2 ön ayarlarının içerikleri aynı olmalıdır. Eksik ön ayar ve mevcut çıktı varsa işlem başlamadan açık bir hata gösterilir; mevcut paketler ezilmez.
+SYY her YKİ için ayrı paket üretir. DM ve AKY, tek `SYKI1-2` config ön ayarından ortak `SYKI1-2` paketi ve MYKI'lar için ayrı paketler üretir. Çıktılar her durumda normal klasördür; ZIP seçilirse aynı klasörlerin `.zip` kopyaları da oluşturulur. Eksik ön ayar ve mevcut klasör/ZIP çıktısı varsa işlem başlamadan açık bir hata gösterilir; mevcut çıktılar ezilmez.
+
+## Yeni YKİ ekleme
+
+**Ön Ayar Yönetimi → YKİ Ayarları** ekranında yeni YKİ adını girip **Ekle** düğmesine basın. Yeni YKİ, SYY/DM/AKY ön ayar listelerine ve üretim seçeneklerine otomatik eklenir. `SYKI`, `MYK19` ve sistemin ortak çıktı adı olan `SYKI1-2` yeni YKİ adı olarak kabul edilmez.
 
 ## Geliştirme ve test
 

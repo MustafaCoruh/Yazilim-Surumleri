@@ -17,7 +17,8 @@ class Aircraft(StrEnum):
     ANKA3 = "ANKA3"
 
 
-STATIONS: tuple[str, ...] = ("SYKI1", "SYKI2", "MYKI15", "MYKI19", "MYKI20")
+DEFAULT_STATIONS: tuple[str, ...] = ("SYKI1", "SYKI2", "MYKI15", "MYKI19", "MYKI20")
+COMMON_SYKI = "SYKI1-2"
 AIRCRAFT_BLOCK_TYPES = {
     Aircraft.ANKA: "OPERATIF",
     Aircraft.AKSUNGUR: "YFYK",
@@ -25,15 +26,10 @@ AIRCRAFT_BLOCK_TYPES = {
 }
 
 
-def output_stations(software: Software) -> tuple[tuple[str, tuple[str, ...]], ...]:
+def output_stations(software: Software, stations: tuple[str, ...]) -> tuple[str, ...]:
     if software is Software.SYY:
-        return tuple((station, (station,)) for station in STATIONS)
-    return (
-        ("SYKI1-2", ("SYKI1", "SYKI2")),
-        ("MYKI15", ("MYKI15",)),
-        ("MYKI19", ("MYKI19",)),
-        ("MYKI20", ("MYKI20",)),
-    )
+        return stations
+    return (COMMON_SYKI,) + tuple(station for station in stations if station not in ("SYKI1", "SYKI2"))
 
 
 @dataclass(frozen=True)
@@ -42,3 +38,5 @@ class BuildRequest:
     bin_directory: Path
     output_directory: Path
     aircraft: Aircraft | None = None
+    stations: tuple[str, ...] = ()
+    create_zip: bool = False
