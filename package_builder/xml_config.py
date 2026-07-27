@@ -49,7 +49,7 @@ def _encoding_and_declaration(path: Path) -> tuple[str, bool, bytes]:
     return (encoding if bom in (b"\xff\xfe", b"\xfe\xff") else declared, declaration, bom)
 
 
-def _set_exact(root: ET.Element, field: str, value: str, package: str, file: Path) -> None:
+def _find_exact(root: ET.Element, field: str, package: str, file: Path) -> ET.Element:
     matches: list[ET.Element] = []
     for element in root.iter():
         identity = element.attrib.get("key", element.attrib.get("name", ""))
@@ -60,11 +60,43 @@ def _set_exact(root: ET.Element, field: str, value: str, package: str, file: Pat
             f"{package}: {file.name} içinde {field} tam olarak bir kez bulunmalı "
             f"(bulunan: {len(matches)})."
         )
-    element = matches[0]
+    return matches[0]
+
+
+def _set_exact(root: ET.Element, field: str, value: str, package: str, file: Path) -> None:
+    element = _find_exact(root, field, package, file)
     if "value" in element.attrib:
         element.set("value", value)
     else:
         element.text = value
+
+
+def validate_config_preset(software: Software, config: Path, label: str) -> None:
+    user = find_xml_file(config, "UserConfiguration", label)
+    try:
+        user_root = ET.parse(user).getroot()
+    except (ET.ParseError, OSError) as exc:
+        raise XmlConfigurationError(f"{label}: {user.name} XML dosyası okunamadı: {exc}") from exc
+    user_fields = ["ConfigFileLocation", "ProgramFileLocation"]
+    if software in (Software.DM, Software.AKY):
+        user_fields.append("LogFilesLocation")
+    for field in user_fields:
+        _find_exact(user_root, field, label, user)
+
+    if software is Software.DM:
+        return
+    app = find_xml_file(config, "AppSettings", label)
+    try:
+        app_root = ET.parse(app).getroot()
+    except (ET.ParseError, OSError) as exc:
+        raise XmlConfigurationError(f"{label}: {app.name} XML dosyası okunamadı: {exc}") from exc
+    fields = ["GainsFilePath", "UILayoutsFolder", "HandoverSettingsFilePath"] if software is Software.SYY else ["BlockType"]
+    for field in fields:
+        element = _find_exact(app_root, field, label, app)
+        if field == "GainsFilePath":
+            current = element.attrib.get("value", element.text or "")
+            if not re.search(r"GainsParamsTable_MessageTable_[^\\/]+\.csv$", current):
+                raise XmlConfigurationError(f"{label}: {app.name} içinde geçerli gains dosya adı bulunamadı.")
 
 
 def _update(path: Path, values: dict[str, str], package: str) -> None:

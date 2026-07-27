@@ -5,7 +5,7 @@ Windows için SYY, DM ve AKY dağıtım paketlerini güvenli biçimde hazırlaya
 ## Kullanım
 
 1. Uygulamayı açıp **Ön Ayar Yönetimi** ekranına geçin.
-2. Her yazılım ve YKİ çifti için config klasörünü **Yükle / Güncelle** ile kaydedin. Ön ayarlar `%LOCALAPPDATA%\TAI\YazilimSurumleri` altında kalıcı olarak tutulur; kaynak klasör sonradan gerekli değildir.
+2. Her yazılım ve YKİ çifti için config klasörünü **Yükle / Güncelle** ile kaydedin. Gerekli XML dosyaları ve alanları yükleme sırasında doğrulanır. Ön ayarlar `%LOCALAPPDATA%\TAI\YazilimSurumleri` altında kalıcı olarak tutulur; kaynak klasör sonradan gerekli değildir.
 3. **Paket Oluştur** ekranında SYY, DM veya AKY seçin. AKY için ayrıca ANKA, AKSUNGUR ya da ANKA3 seçin.
 4. Tam adı `bin_1.2.3` benzeri olan bin klasörünü ve boş bir çıktı konumunu seçip **Paketleri Oluştur** düğmesine basın.
 

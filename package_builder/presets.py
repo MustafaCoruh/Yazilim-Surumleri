@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .errors import PresetError
 from .models import STATIONS, Software
+from .xml_config import validate_config_preset
 
 
 class PresetStore:
@@ -45,6 +46,7 @@ class PresetStore:
         if not source.is_dir():
             raise PresetError(f"Config klasörü bulunamadı: {source}")
         key = self._key(software, station)
+        validate_config_preset(software, source, f"{software.value}/{station} ön ayarı")
         destination = self.root / "configs" / software.value / station
         destination.parent.mkdir(parents=True, exist_ok=True)
         temporary = Path(tempfile.mkdtemp(prefix=f".{station}-", dir=destination.parent))

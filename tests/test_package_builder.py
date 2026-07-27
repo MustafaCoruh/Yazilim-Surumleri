@@ -134,3 +134,15 @@ def test_xml_encoding_declaration_and_extensionless_name_are_preserved(tmp_path,
     assert app.read_bytes().startswith(bom)
     assert "ConfigFileLocation" in user.read_text(encoding=encoding)
     assert "GainsParamsTable_MessageTable_7.41.csv" in app.read_text(encoding=encoding)
+
+
+def test_invalid_preset_is_rejected_before_being_saved(tmp_path):
+    source = config(tmp_path / "source")
+    user = source / "UserConfiguration"
+    user.write_text(USER.replace('<add key="LogFilesLocation" value="old-l"/>', ""), encoding="utf-8")
+    store = PresetStore(tmp_path / "data")
+
+    with pytest.raises(XmlConfigurationError, match="DM/SYKI1 ön ayarı.*LogFilesLocation"):
+        store.save(Software.DM, "SYKI1", source)
+
+    assert store.get(Software.DM, "SYKI1") is None
