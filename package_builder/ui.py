@@ -9,6 +9,7 @@ from tkinter import filedialog, messagebox, ttk
 
 from .builder import PackageBuilder
 from .errors import PackageError
+from .icon import ICON_PNG_BASE64
 from .models import Aircraft, BuildRequest, Software, output_stations
 from .presets import PresetStore
 from .settings import StationStore
@@ -22,9 +23,11 @@ def application_data_directory() -> Path:
 class Application(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Yazılım Sürümleri")
+        self.title("Sürüm İstasyonu")
         self.geometry("780x540")
         self.minsize(720, 500)
+        self._icon_image = tk.PhotoImage(data=ICON_PNG_BASE64)
+        self.iconphoto(True, self._icon_image)
         self.store = PresetStore(application_data_directory())
         self.station_store = StationStore(application_data_directory())
         self._configure_style()

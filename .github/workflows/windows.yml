@@ -19,10 +19,12 @@ jobs:
       - name: Test
         run: python -m pytest
       - name: Build Windows application
-        run: pyinstaller --noconfirm --clean --windowed --name YazilimSurumleri yazilim_surumleri.py
+        run: |
+          python -m package_builder.icon assets
+          pyinstaller --noconfirm --clean --onefile --windowed --name SurumIstasyonu --icon "assets/app_icon.ico" yazilim_surumleri.py
       - name: Upload Windows application
         uses: actions/upload-artifact@v4
         with:
-          name: YazilimSurumleri-windows
-          path: dist/YazilimSurumleri
+          name: SurumIstasyonu-windows
+          path: dist/SurumIstasyonu.exe
           if-no-files-found: error

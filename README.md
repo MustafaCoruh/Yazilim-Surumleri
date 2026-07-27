@@ -1,4 +1,4 @@
-# Yazılım Sürümleri
+# Sürüm İstasyonu
 
 Windows için SYY, DM ve AKY dağıtım paketlerini güvenli biçimde hazırlayan masaüstü uygulamasıdır.
 
@@ -14,7 +14,7 @@ VS Code terminalinden çalıştırmak için:
 .\calistir.bat
 ```
 
-Kaynak giriş dosyası depo kökündeki `yazilim_surumleri.py` dosyasıdır. Paketlenmiş uygulamada çalıştırılacak dosya `YazilimSurumleri.exe` olur.
+Kaynak giriş dosyası depo kökündeki `yazilim_surumleri.py` dosyasıdır. Paketlenmiş uygulamada çalıştırılacak tek dosya `SurumIstasyonu.exe` olur.
 
 ## Kullanım
 
@@ -43,20 +43,28 @@ pytest
 python -m package_builder
 ```
 
-## Windows dağıtımı
+## Windows programı ve masaüstü kısayolu
 
-Testleri çalıştırıp Windows paketini ve ZIP dosyasını tek komutla üretmek için:
+Testleri çalıştırıp ikonlu, tek dosyalık Windows programını üretmek için:
 
 ```powershell
 .\build_windows.ps1
 ```
 
-ZIP çıktısı `release\YazilimSurumleri-windows.zip` altında oluşur. Elle PyInstaller çalıştırmak için:
+Program `release\SurumIstasyonu.exe` altında oluşur. Programı kullanıcıya yalnızca bu dosyayla teslim edebilirsiniz. Kendi bilgisayarınıza `%LOCALAPPDATA%\Programs\SurumIstasyonu` altında kurmak ve masaüstüne ikonlu **Sürüm İstasyonu** kısayolu eklemek için:
+
+```powershell
+.\masaustune_kur.ps1
+```
+
+Elle PyInstaller çalıştırmak için:
 
 ```powershell
 pip install -e .[dev]
-pyinstaller --noconfirm --clean --windowed --name YazilimSurumleri yazilim_surumleri.py
+python -m package_builder.icon assets
+pyinstaller --noconfirm --clean --onefile --windowed --name SurumIstasyonu --icon "assets\app_icon.ico" yazilim_surumleri.py
 ```
 
-Çalıştırılabilir uygulama `dist\YazilimSurumleri\YazilimSurumleri.exe` konumunda oluşur. Dağıtım için `dist\YazilimSurumleri` klasörünü bütünüyle teslim edin.
-GitHub Actions içindeki **Windows** iş akışı her gönderimde testleri Windows üzerinde çalıştırır ve aynı klasörü indirilebilir `YazilimSurumleri-windows` artefaktı olarak üretir.
+Geçici build çıktısı `dist\SurumIstasyonu.exe` konumunda oluşur. GitHub Actions içindeki **Windows** iş akışı da her gönderimde testleri Windows üzerinde çalıştırır ve indirilebilir `SurumIstasyonu-windows` artefaktını üretir.
+
+İkonun düzenlenebilir kaynağı `assets\app_icon.svg` dosyasıdır. PR sistemleri binary dosyaları kabul etmediği için PNG ve ICO Git'e eklenmez; build sırasında metin tabanlı gömülü ikon verisinden otomatik üretilir.
