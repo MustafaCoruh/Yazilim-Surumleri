@@ -6,6 +6,8 @@ Windows için SYY, DM ve AKY dağıtım paketlerini güvenli biçimde hazırlaya
 
 Depoyu VS Code ile açtıktan sonra en kolay yöntem depo kökündeki `calistir.bat` dosyasına çift tıklamaktır. Betik ilk çalıştırmada `.venv` ortamını oluşturur ve uygulamayı açar; ayrıca paket kurulumu gerekmez. Python 3.11 veya üstünün kurulu olması gerekir.
 
+Daha önce oluşturulmuş `.venv` farklı veya eski bir Python sürümüne aitse klasörü silip `calistir.bat` dosyasını yeniden çalıştırın.
+
 VS Code terminalinden çalıştırmak için:
 
 ```powershell

@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import threading
 import tkinter as tk
+import tkinter.font as tkfont
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
@@ -31,10 +32,11 @@ class Application(tk.Tk):
         style = ttk.Style(self)
         if "vista" in style.theme_names():
             style.theme_use("vista")
+        for name in ("TkDefaultFont", "TkTextFont", "TkMenuFont", "TkHeadingFont"):
+            tkfont.nametofont(name).configure(family="Segoe UI", size=10)
         style.configure("Title.TLabel", font=("Segoe UI Semibold", 20))
         style.configure("Hint.TLabel", foreground="#596273")
         style.configure("Accent.TButton", font=("Segoe UI Semibold", 10), padding=(16, 9))
-        self.option_add("*Font", "Segoe UI 10")
 
     def _clear(self) -> ttk.Frame:
         for child in self.winfo_children():

@@ -13,6 +13,13 @@ if not exist ".venv\Scripts\python.exe" (
     if errorlevel 1 goto :error
 )
 
+".venv\Scripts\python.exe" -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 11) else 1)"
+if errorlevel 1 (
+    echo .venv Python surumu desteklenmiyor. .venv klasorunu silip yeniden deneyin.
+    pause
+    exit /b 1
+)
+
 ".venv\Scripts\python.exe" yazilim_surumleri.py
 if errorlevel 1 goto :error
 exit /b 0
