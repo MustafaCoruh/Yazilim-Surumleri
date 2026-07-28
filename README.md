@@ -6,7 +6,7 @@ Windows için SYY, DM ve AKY dağıtım paketlerini güvenli biçimde hazırlaya
 
 Depoyu VS Code ile açtıktan sonra en kolay yöntem depo kökündeki `calistir.bat` dosyasına çift tıklamaktır. Betik ilk çalıştırmada `.venv` ortamını oluşturur ve uygulamayı açar; ayrıca paket kurulumu gerekmez. Python 3.11 veya üstünün kurulu olması gerekir.
 
-Daha önce oluşturulmuş `.venv` farklı veya eski bir Python sürümüne aitse klasörü silip `calistir.bat` dosyasını yeniden çalıştırın.
+`.venv` klasörleri bilgisayara özeldir ve başka bilgisayara kopyalanmamalıdır. Betik taşınmış veya uyumsuz bir `.venv` algılarsa otomatik silip hedef bilgisayardaki Python ile yeniden oluşturur. `release\SurumIstasyonu.exe` mevcutsa Python kullanmadan doğrudan onu açar.
 
 VS Code terminalinden çalıştırmak için:
 
@@ -68,3 +68,9 @@ pyinstaller --noconfirm --clean --onefile --windowed --name SurumIstasyonu --ico
 Geçici build çıktısı `dist\SurumIstasyonu.exe` konumunda oluşur. GitHub Actions içindeki **Windows** iş akışı da her gönderimde testleri Windows üzerinde çalıştırır ve indirilebilir `SurumIstasyonu-windows` artefaktını üretir.
 
 İkonun düzenlenebilir kaynağı `assets\app_icon.svg` dosyasıdır. PR sistemleri binary dosyaları kabul etmediği için PNG ve ICO Git'e eklenmez; build sırasında metin tabanlı gömülü ikon verisinden otomatik üretilir.
+
+## Başka bilgisayara aktarma
+
+Hedef bilgisayarda Python gerektirmeyen önerilen yöntem yalnızca `release\SurumIstasyonu.exe` dosyasını aktarıp çalıştırmaktır. Kaynak klasörün tamamı aktarılacaksa `.venv`, `build` ve `dist` klasörlerini aktarmayın. Kaynak kodu `calistir.bat` ile çalıştırmak için hedef bilgisayarda Python 3.11 veya üstü kurulu olmalıdır.
+
+`No Python at ...` hatası, başka bilgisayarda oluşturulmuş `.venv` klasörünün taşındığını gösterir. Güncel `calistir.bat` bu klasörü otomatik yeniler. Python kurmak istemiyorsanız geliştirme bilgisayarında `build_windows.ps1` çalıştırıp oluşan `release\SurumIstasyonu.exe` dosyasını hedef bilgisayara yeniden aktarın.
