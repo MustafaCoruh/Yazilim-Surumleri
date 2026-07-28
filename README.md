@@ -47,15 +47,19 @@ python -m package_builder
 
 Testleri çalıştırıp ikonlu, tek dosyalık Windows programını üretmek için:
 
-```powershell
-.\build_windows.ps1
+```bat
+build_windows.bat
 ```
+
+Bu yöntem yalnızca Komut İstemi (`cmd.exe`) ve Python gerektirir; PowerShell gerekmez. PowerShell bulunan bilgisayarlarda alternatif olarak `.\build_windows.ps1` kullanılabilir.
 
 Program `release\SurumIstasyonu.exe` altında oluşur. Programı kullanıcıya yalnızca bu dosyayla teslim edebilirsiniz. Kendi bilgisayarınıza `%LOCALAPPDATA%\Programs\SurumIstasyonu` altında kurmak ve masaüstüne ikonlu **Sürüm İstasyonu** kısayolu eklemek için:
 
-```powershell
-.\masaustune_kur.ps1
+```bat
+masaustune_kur.bat
 ```
+
+PowerShell olmayan bilgisayarlarda bu betik tek dosyalık programı doğrudan masaüstüne `SurumIstasyonu.exe` adıyla kopyalar. PowerShell bulunan bilgisayarlarda `.\masaustune_kur.ps1` alternatif olarak ikonlu kısayol oluşturur.
 
 Elle PyInstaller çalıştırmak için:
 
@@ -73,4 +77,4 @@ Geçici build çıktısı `dist\SurumIstasyonu.exe` konumunda oluşur. GitHub Ac
 
 Hedef bilgisayarda Python gerektirmeyen önerilen yöntem yalnızca `release\SurumIstasyonu.exe` dosyasını aktarıp çalıştırmaktır. Kaynak klasörün tamamı aktarılacaksa `.venv`, `build` ve `dist` klasörlerini aktarmayın. Kaynak kodu `calistir.bat` ile çalıştırmak için hedef bilgisayarda Python 3.11 veya üstü kurulu olmalıdır.
 
-`No Python at ...` hatası, başka bilgisayarda oluşturulmuş `.venv` klasörünün taşındığını gösterir. Güncel `calistir.bat` bu klasörü otomatik yeniler. Python kurmak istemiyorsanız geliştirme bilgisayarında `build_windows.ps1` çalıştırıp oluşan `release\SurumIstasyonu.exe` dosyasını hedef bilgisayara yeniden aktarın.
+`No Python at ...` hatası, başka bilgisayarda oluşturulmuş `.venv` klasörünün taşındığını gösterir. Güncel `calistir.bat` bu klasörü otomatik yeniler. Python kurmak istemiyorsanız geliştirme bilgisayarında `build_windows.bat` çalıştırıp oluşan `release\SurumIstasyonu.exe` dosyasını hedef bilgisayara yeniden aktarın.
