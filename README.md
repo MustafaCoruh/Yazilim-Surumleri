@@ -6,7 +6,7 @@ Windows için SYY, DM ve AKY dağıtım paketlerini güvenli biçimde hazırlaya
 
 Depoyu VS Code ile açtıktan sonra en kolay yöntem depo kökündeki `calistir.bat` dosyasına çift tıklamaktır. Betik ilk çalıştırmada `.venv` ortamını oluşturur ve uygulamayı açar; ayrıca paket kurulumu gerekmez. Python 3.11 veya üstünün kurulu olması gerekir.
 
-`.venv` klasörleri bilgisayara özeldir ve başka bilgisayara kopyalanmamalıdır. Betik taşınmış veya uyumsuz bir `.venv` algılarsa otomatik silip hedef bilgisayardaki Python ile yeniden oluşturur. `release\SurumIstasyonu.exe` mevcutsa Python kullanmadan doğrudan onu açar.
+`.venv` klasörleri bilgisayara özeldir ve başka bilgisayara kopyalanmamalıdır. Betik taşınmış veya uyumsuz bir `.venv` algılarsa otomatik silip hedef bilgisayardaki Python ile yeniden oluşturur. `release\SurumIstasyonu\SurumIstasyonu.exe` mevcutsa Python kullanmadan doğrudan onu açar.
 
 VS Code terminalinden çalıştırmak için:
 
@@ -14,7 +14,7 @@ VS Code terminalinden çalıştırmak için:
 .\calistir.bat
 ```
 
-Kaynak giriş dosyası depo kökündeki `yazilim_surumleri.py` dosyasıdır. Paketlenmiş uygulamada çalıştırılacak tek dosya `SurumIstasyonu.exe` olur.
+Kaynak giriş dosyası depo kökündeki `yazilim_surumleri.py` dosyasıdır. Paketlenmiş uygulama `release\SurumIstasyonu` klasöründeki `SurumIstasyonu.exe` ile açılır.
 
 ## Kullanım
 
@@ -45,7 +45,7 @@ python -m package_builder
 
 ## Windows programı ve masaüstü kısayolu
 
-Testleri çalıştırıp ikonlu, tek dosyalık Windows programını üretmek için:
+Testleri çalıştırıp ikonlu Windows programını üretmek için:
 
 ```bat
 build_windows.bat
@@ -53,28 +53,28 @@ build_windows.bat
 
 Bu yöntem yalnızca Komut İstemi (`cmd.exe`) ve Python gerektirir; PowerShell gerekmez. PowerShell bulunan bilgisayarlarda alternatif olarak `.\build_windows.ps1` kullanılabilir.
 
-Program `release\SurumIstasyonu.exe` altında oluşur. Programı kullanıcıya yalnızca bu dosyayla teslim edebilirsiniz. Kendi bilgisayarınıza `%LOCALAPPDATA%\Programs\SurumIstasyonu` altında kurmak ve masaüstüne ikonlu **Sürüm İstasyonu** kısayolu eklemek için:
+Program `release\SurumIstasyonu\SurumIstasyonu.exe` altında oluşur. Aynı klasördeki `_internal` dizini Python çalışma zamanı ve Tk kitaplıklarını içerdiğinden silinmemeli veya EXE'den ayrılmamalıdır. Kendi bilgisayarınıza `%LOCALAPPDATA%\Programs\SurumIstasyonu` altında kurmak ve masaüstüne ikonlu **Sürüm İstasyonu** kısayolu eklemek için:
 
 ```bat
 masaustune_kur.bat
 ```
 
-PowerShell olmayan bilgisayarlarda bu betik tek dosyalık programı doğrudan masaüstüne `SurumIstasyonu.exe` adıyla kopyalar. PowerShell bulunan bilgisayarlarda `.\masaustune_kur.ps1` alternatif olarak ikonlu kısayol oluşturur.
+PowerShell olmayan bilgisayarlarda da bu betik program klasörünü kullanıcı alanına kurar ve Windows Script Host üzerinden masaüstü kısayolu oluşturur. PowerShell bulunan bilgisayarlarda `.\masaustune_kur.ps1` alternatif olarak aynı kurulumu yapar.
 
 Elle PyInstaller çalıştırmak için:
 
 ```powershell
 pip install -e .[dev]
 python -m package_builder.icon assets
-pyinstaller --noconfirm --clean --onefile --windowed --name SurumIstasyonu --icon "assets\app_icon.ico" yazilim_surumleri.py
+pyinstaller --noconfirm --clean --onedir --noupx --windowed --name SurumIstasyonu --icon "assets\app_icon.ico" yazilim_surumleri.py
 ```
 
-Geçici build çıktısı `dist\SurumIstasyonu.exe` konumunda oluşur. GitHub Actions içindeki **Windows** iş akışı da her gönderimde testleri Windows üzerinde çalıştırır ve indirilebilir `SurumIstasyonu-windows` artefaktını üretir.
+Geçici build çıktısı `dist\SurumIstasyonu` konumunda oluşur. GitHub Actions içindeki **Windows** iş akışı da her gönderimde testleri Windows üzerinde çalıştırır ve indirilebilir `SurumIstasyonu-windows` artefaktını üretir.
 
 İkonun düzenlenebilir kaynağı `assets\app_icon.svg` dosyasıdır. PR sistemleri binary dosyaları kabul etmediği için PNG ve ICO Git'e eklenmez; build sırasında metin tabanlı gömülü ikon verisinden otomatik üretilir.
 
 ## Başka bilgisayara aktarma
 
-Hedef bilgisayarda Python gerektirmeyen önerilen yöntem yalnızca `release\SurumIstasyonu.exe` dosyasını aktarıp çalıştırmaktır. Kaynak klasörün tamamı aktarılacaksa `.venv`, `build` ve `dist` klasörlerini aktarmayın. Kaynak kodu `calistir.bat` ile çalıştırmak için hedef bilgisayarda Python 3.11 veya üstü kurulu olmalıdır.
+Hedef bilgisayarda Python gerektirmeyen önerilen yöntem `release\SurumIstasyonu` klasörünü içeriğiyle birlikte aktarıp içindeki `SurumIstasyonu.exe` dosyasını çalıştırmaktır. `_internal` klasörü mutlaka EXE'nin yanında kalmalıdır. Kaynak klasörün tamamı aktarılacaksa `.venv`, `build` ve `dist` klasörlerini aktarmayın. Kaynak kodu `calistir.bat` ile çalıştırmak için hedef bilgisayarda Python 3.11 veya üstü kurulu olmalıdır.
 
-`No Python at ...` hatası, başka bilgisayarda oluşturulmuş `.venv` klasörünün taşındığını gösterir. Güncel `calistir.bat` bu klasörü otomatik yeniler. Python kurmak istemiyorsanız geliştirme bilgisayarında `build_windows.bat` çalıştırıp oluşan `release\SurumIstasyonu.exe` dosyasını hedef bilgisayara yeniden aktarın.
+`No Python at ...` hatası, başka bilgisayarda oluşturulmuş `.venv` klasörünün taşındığını gösterir. `Failed to start embedded Python interpreter` hatası ise eski tek-dosyalık build'in geçici dizinde gömülü Python'u başlatamadığını gösterir. Güncel build klasörlü ve sıkıştırmasız üretildiğinden kurumsal güvenlik/antivirüs ortamlarında daha güvenilirdir. Eski `dist`, `build` ve `release` çıktılarını kullanmayın; `build_windows.bat` ile yeniden üretin.

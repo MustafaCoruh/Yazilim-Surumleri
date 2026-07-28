@@ -1,15 +1,15 @@
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
-$source = Join-Path $PSScriptRoot "release\SurumIstasyonu.exe"
-if (-not (Test-Path $source)) {
+$source = Join-Path $PSScriptRoot "release\SurumIstasyonu"
+if (-not (Test-Path (Join-Path $source "SurumIstasyonu.exe"))) {
     & (Join-Path $PSScriptRoot "build_windows.ps1")
 }
 
 $installDirectory = Join-Path $env:LOCALAPPDATA "Programs\SurumIstasyonu"
-New-Item -ItemType Directory -Force -Path $installDirectory | Out-Null
 $executable = Join-Path $installDirectory "SurumIstasyonu.exe"
-Copy-Item $source $executable -Force
+Remove-Item $installDirectory -Recurse -Force -ErrorAction SilentlyContinue
+Copy-Item $source $installDirectory -Recurse
 
 $desktop = [Environment]::GetFolderPath("Desktop")
 $shortcutPath = Join-Path $desktop "Sürüm İstasyonu.lnk"

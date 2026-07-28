@@ -2,8 +2,8 @@
 setlocal
 cd /d "%~dp0"
 
-if exist "release\SurumIstasyonu.exe" (
-    start "" "release\SurumIstasyonu.exe"
+if exist "release\SurumIstasyonu\SurumIstasyonu.exe" (
+    start "" "release\SurumIstasyonu\SurumIstasyonu.exe"
     exit /b 0
 )
 

@@ -40,14 +40,16 @@ if errorlevel 1 goto :error
 "%VENV_PYTHON%" -m package_builder.icon assets
 if errorlevel 1 goto :error
 echo Windows programi olusturuluyor...
-"%VENV_PYTHON%" -m PyInstaller --noconfirm --clean --onefile --windowed --name SurumIstasyonu --icon "assets\app_icon.ico" yazilim_surumleri.py
+"%VENV_PYTHON%" -m PyInstaller --noconfirm --clean --onedir --noupx --windowed --name SurumIstasyonu --icon "assets\app_icon.ico" yazilim_surumleri.py
 if errorlevel 1 goto :error
 
+if exist "release\SurumIstasyonu" rmdir /s /q "release\SurumIstasyonu"
 if not exist release mkdir release
-copy /y "dist\SurumIstasyonu.exe" "release\SurumIstasyonu.exe" >nul
+if exist "release\SurumIstasyonu.exe" del /q "release\SurumIstasyonu.exe"
+xcopy "dist\SurumIstasyonu" "release\SurumIstasyonu\" /e /i /y >nul
 if errorlevel 1 goto :error
 echo.
-echo Hazir: %CD%\release\SurumIstasyonu.exe
+echo Hazir: %CD%\release\SurumIstasyonu\SurumIstasyonu.exe
 pause
 exit /b 0
 

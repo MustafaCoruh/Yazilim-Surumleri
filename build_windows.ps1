@@ -13,11 +13,12 @@ $python = Join-Path $PSScriptRoot ".venv\Scripts\python.exe"
 & $python -m pip install -e ".[dev]"
 & $python -m pytest
 & $python -m package_builder.icon assets
-& $python -m PyInstaller --noconfirm --clean --onefile --windowed --name SurumIstasyonu `
+& $python -m PyInstaller --noconfirm --clean --onedir --noupx --windowed --name SurumIstasyonu `
     --icon "assets\app_icon.ico" yazilim_surumleri.py
 
 New-Item -ItemType Directory -Force -Path release | Out-Null
-$executable = Join-Path $PSScriptRoot "dist\SurumIstasyonu.exe"
-$releaseExecutable = Join-Path $PSScriptRoot "release\SurumIstasyonu.exe"
-Copy-Item $executable $releaseExecutable -Force
-Write-Host "Hazır: $releaseExecutable"
+$releaseDirectory = Join-Path $PSScriptRoot "release\SurumIstasyonu"
+Remove-Item $releaseDirectory -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item (Join-Path $PSScriptRoot "release\SurumIstasyonu.exe") -Force -ErrorAction SilentlyContinue
+Copy-Item (Join-Path $PSScriptRoot "dist\SurumIstasyonu") $releaseDirectory -Recurse
+Write-Host "Hazır: $releaseDirectory\SurumIstasyonu.exe"
