@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "yazilim-surumleri"
+version = "1.0.0"
+description = "Sürüm İstasyonu - SYY, DM ve AKY paketleme uygulaması"
+requires-python = ">=3.11"
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pyinstaller>=6"]
+
+[project.gui-scripts]
+surum-istasyonu = "package_builder.ui:main"
+
+[tool.setuptools.packages.find]
+include = ["package_builder*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["."]
