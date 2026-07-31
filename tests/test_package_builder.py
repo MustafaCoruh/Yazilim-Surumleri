@@ -142,6 +142,38 @@ def test_xml_encoding_declaration_and_extensionless_name_are_preserved(tmp_path,
     assert "GainsParamsTable_MessageTable_7.41.csv" in app.read_text(encoding=encoding)
 
 
+def test_gains_filename_accepts_case_and_trailing_text_while_preserving_filename(tmp_path):
+    directory = config(tmp_path / "config")
+    app = directory / "AppSettings.xml"
+    app.write_text(
+        APP.replace(
+            r"D:\old\GainsParamsTable_MessageTable_7.41.csv",
+            r"D:\old\GainsParamsTable_MessageTable_V7.41.CSV  ",
+        ),
+        encoding="utf-8",
+    )
+
+    configure_package(Software.SYY, directory, "SYY_1.0_SYKI1", "bin_1.0", None)
+
+    assert values(app)["GainsFilePath"].endswith(r"\GainsParamsTable_MessageTable_V7.41.CSV")
+
+
+def test_nested_xml_value_element_is_read_and_updated(tmp_path):
+    directory = config(tmp_path / "config")
+    app = directory / "AppSettings.xml"
+    nested = APP.replace(
+        '<add key="GainsFilePath" value="D:\\old\\GainsParamsTable_MessageTable_7.41.csv"/>',
+        '<add key="GainsFilePath"><value>D:\\old\\GainsParamsTable_MessageTable_8.2.csv</value></add>',
+    )
+    app.write_text(nested, encoding="utf-8")
+
+    configure_package(Software.SYY, directory, "SYY_1.0_SYKI1", "bin_1.0", None)
+
+    value = ET.parse(app).getroot().find("./add[@key='GainsFilePath']/value")
+    assert value is not None
+    assert value.text.endswith(r"\GainsParamsTable_MessageTable_8.2.csv")
+
+
 def test_invalid_preset_is_rejected_before_being_saved(tmp_path):
     source = config(tmp_path / "source")
     user = source / "UserConfiguration"

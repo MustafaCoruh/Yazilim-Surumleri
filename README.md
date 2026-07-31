@@ -29,6 +29,8 @@ SYY her YKİ için ayrı paket üretir. DM ve AKY, tek `SYKI1-2` config ön ayar
 
 SYY, DM ve AKY ön ayarları yüklenirken **Hava aracı grubu** alanından `ANKA / AKSUNGUR` veya `ANKA3` seçilir. ANKA3 grubu seçildiğinde YKİ listesinde yalnızca `SYKI1` ve `SYKI2` bulunur. Paket ekranında ANKA3 hava aracı seçildiğinde yalnızca ilgili yazılımın ANKA3 grubuna yüklenen config kullanılır; ANKA/AKSUNGUR config'ine geri düşülmez.
 
+SYY `GainsFilePath` değeri XML içinde `value` niteliğinde, doğrudan metin olarak veya iç içe `<value>` öğesinde bulunabilir. `GainsParamsTable_MessageTable_<sürüm>.csv` dosya adında büyük/küçük harf ve yol sonundaki boşluk farkları kabul edilir; config'te bulunan gerçek dosya adı pakete aynen taşınır.
+
 ## Yeni YKİ ekleme
 
 **Ön Ayar Yönetimi → YKİ Ayarları** ekranında yeni YKİ adını girip **Ekle** düğmesine basın. Yeni YKİ, SYY/DM/AKY ön ayar listelerine ve üretim seçeneklerine otomatik eklenir. `SYKI`, `MYK19` ve sistemin ortak çıktı adı olan `SYKI1-2` yeni YKİ adı olarak kabul edilmez.

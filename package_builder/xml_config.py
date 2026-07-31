@@ -67,8 +67,41 @@ def _set_exact(root: ET.Element, field: str, value: str, package: str, file: Pat
     element = _find_exact(root, field, package, file)
     if "value" in element.attrib:
         element.set("value", value)
-    else:
+    elif len(element) == 0:
         element.text = value
+    else:
+        value_children = [child for child in element if _local_name(child.tag).casefold() == "value"]
+        if len(value_children) != 1:
+            raise XmlConfigurationError(
+                f"{package}: {file.name} içinde {field} değer yapısı desteklenmiyor."
+            )
+        value_children[0].text = value
+
+
+def _read_value(element: ET.Element, field: str, package: str, file: Path) -> str:
+    if "value" in element.attrib:
+        return element.attrib["value"]
+    if len(element) == 0:
+        return element.text or ""
+    value_children = [child for child in element if _local_name(child.tag).casefold() == "value"]
+    if len(value_children) != 1:
+        raise XmlConfigurationError(
+            f"{package}: {file.name} içinde {field} değer yapısı desteklenmiyor."
+        )
+    return value_children[0].text or ""
+
+
+def _gains_filename(value: str, package: str, file: Path) -> str:
+    matches = re.findall(
+        r"GainsParamsTable_MessageTable_[^\\/\r\n\"'<>]+?\.csv",
+        value,
+        flags=re.IGNORECASE,
+    )
+    if len(matches) != 1:
+        raise XmlConfigurationError(
+            f"{package}: {file.name} içinde geçerli ve tekil gains dosya adı bulunamadı."
+        )
+    return matches[0]
 
 
 def validate_config_preset(software: Software, config: Path, label: str) -> None:
@@ -94,9 +127,7 @@ def validate_config_preset(software: Software, config: Path, label: str) -> None
     for field in fields:
         element = _find_exact(app_root, field, label, app)
         if field == "GainsFilePath":
-            current = element.attrib.get("value", element.text or "")
-            if not re.search(r"GainsParamsTable_MessageTable_[^\\/]+\.csv$", current):
-                raise XmlConfigurationError(f"{label}: {app.name} içinde geçerli gains dosya adı bulunamadı.")
+            _gains_filename(_read_value(element, field, label, app), label, app)
 
 
 def _update(path: Path, values: dict[str, str], package: str) -> None:
@@ -151,12 +182,11 @@ def configure_package(
                 f"{package_name}: {app.name} içinde GainsFilePath tam olarak bir kez bulunmalı "
                 f"(bulunan: {len(gains_matches)})."
             )
-        gains_value = gains_matches[0].attrib.get("value", gains_matches[0].text or "")
-        filename_match = re.search(r"GainsParamsTable_MessageTable_[^\\/]+\.csv$", gains_value)
-        if not filename_match:
-            raise XmlConfigurationError(f"{package_name}: {app.name} içinde geçerli gains dosya adı bulunamadı.")
+        gains_filename = _gains_filename(
+            _read_value(gains_matches[0], "GainsFilePath", package_name, app), package_name, app,
+        )
         _update(app, {
-            "GainsFilePath": f"{base}\\config\\{filename_match.group(0)}",
+            "GainsFilePath": f"{base}\\config\\{gains_filename}",
             "UILayoutsFolder": f"{base}\\config\\UILayoutsFolder",
             "HandoverSettingsFilePath": f"{base}\\config",
         }, package_name)
