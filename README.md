@@ -19,13 +19,15 @@ Kaynak giriş dosyası depo kökündeki `yazilim_surumleri.py` dosyasıdır. Pak
 ## Kullanım
 
 1. Uygulamayı açıp **Ön Ayar Yönetimi** ekranına geçin.
-2. Her yazılım ve YKİ çifti için doğrudan config klasörünü **Yükle / Güncelle** ile seçin. DM ve AKY için SYKI config'i tek `SYKI1-2` ön ayarı olarak yüklenir. Gerekli XML dosyaları ve alanları yükleme sırasında doğrulanır. Ön ayarlar `%LOCALAPPDATA%\TAI\YazilimSurumleri` altında kalıcı olarak tutulur; kaynak klasör sonradan gerekli değildir.
-3. **Paket Oluştur** ekranında SYY, DM veya AKY seçin. AKY için ayrıca ANKA, AKSUNGUR ya da ANKA3 seçin.
+2. Her yazılım ve YKİ çifti için doğrudan config klasörünü **Yükle / Güncelle** ile seçin. Her yazılımda `Standart` ve `ANKA3` config profilleri ayrı saklanır. Standart DM ve AKY için SYKI config'i tek `SYKI1-2` ön ayarı olarak yüklenir. ANKA3 yalnızca `SYKI1` ve `SYKI2` istasyonlarını destekler; MYKI ön ayarı gösterilmez ve üretilemez. Gerekli XML dosyaları ve alanları yükleme sırasında doğrulanır. Ön ayarlar `%LOCALAPPDATA%\TAI\YazilimSurumleri` altında kalıcı olarak tutulur; kaynak klasör sonradan gerekli değildir.
+3. **Paket Oluştur** ekranında SYY, DM veya AKY seçin. SYY ve DM için `Standart` ya da `ANKA3` config profilini seçin. AKY için ANKA, AKSUNGUR ya da ANKA3 hava aracı seçimi config profilini otomatik belirler.
 4. Üretilecek YKİ listesinden tek bir YKİ veya **Tümü** seçeneğini belirleyin.
 5. Tam adı `bin_1.2.3` benzeri olan bin klasörünü ve boş bir çıktı konumunu seçip **Paketleri Oluştur** düğmesine basın.
 6. Sorulduğunda normal çıktı klasörlerine ek olarak ZIP dosyaları isteyip istemediğinizi belirtin.
 
 SYY her YKİ için ayrı paket üretir. DM ve AKY, tek `SYKI1-2` config ön ayarından ortak `SYKI1-2` paketi ve MYKI'lar için ayrı paketler üretir. Çıktılar her durumda normal klasördür; ZIP seçilirse aynı klasörlerin `.zip` kopyaları da oluşturulur. Eksik ön ayar ve mevcut klasör/ZIP çıktısı varsa işlem başlamadan açık bir hata gösterilir; mevcut çıktılar ezilmez.
+
+SYY, DM ve AKY ön ayarları yüklenirken **Config profili** alanından `Standart` veya `ANKA3` seçilir. ANKA3 profili seçildiğinde YKİ listesinde yalnızca `SYKI1` ve `SYKI2` bulunur. Paket ekranında ANKA3 profili veya AKY/ANKA3 hava aracı seçildiğinde yalnızca ilgili yazılımın ANKA3 profiline yüklenen config kullanılır; standart config'e geri düşülmez.
 
 ## Yeni YKİ ekleme
 

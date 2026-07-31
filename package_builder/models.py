@@ -24,9 +24,20 @@ AIRCRAFT_BLOCK_TYPES = {
     Aircraft.AKSUNGUR: "YFYK",
     Aircraft.ANKA3: "ANKA3",
 }
+PRESET_PROFILES: tuple[str, ...] = ("Standart", "ANKA3")
 
 
-def output_stations(software: Software, stations: tuple[str, ...]) -> tuple[str, ...]:
+def preset_profile(aircraft: Aircraft | None, requested_profile: str | None = None) -> str | None:
+    if aircraft is Aircraft.ANKA3 or requested_profile == Aircraft.ANKA3.value:
+        return Aircraft.ANKA3.value
+    return None
+
+
+def output_stations(
+    software: Software, stations: tuple[str, ...], profile: str | None = None,
+) -> tuple[str, ...]:
+    if profile == Aircraft.ANKA3.value:
+        return tuple(station for station in ("SYKI1", "SYKI2") if station in stations)
     if software is Software.SYY:
         return stations
     return (COMMON_SYKI,) + tuple(station for station in stations if station not in ("SYKI1", "SYKI2"))
@@ -40,3 +51,4 @@ class BuildRequest:
     aircraft: Aircraft | None = None
     stations: tuple[str, ...] = ()
     create_zip: bool = False
+    profile: str | None = None

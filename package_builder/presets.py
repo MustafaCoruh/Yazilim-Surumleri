@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import json
+import re
 import shutil
 import tempfile
 from pathlib import Path
 
 from .errors import PresetError
-from .models import Software
+from .models import Aircraft, Software
 from .xml_config import validate_config_preset
 
 
@@ -15,10 +16,16 @@ class PresetStore:
         self.root = Path(root)
         self._index_path = self.root / "presets.json"
 
-    def _key(self, software: Software, station: str) -> str:
-        if not station:
-            raise PresetError("YKİ boş olamaz.")
-        return f"{software.value}/{station}"
+    def _key(self, software: Software, station: str, profile: str | None = None) -> str:
+        if not re.fullmatch(r"[A-Z][A-Z0-9]*(?:-[A-Z0-9]+)?", station):
+            raise PresetError(f"Geçersiz YKİ: {station}")
+        if profile not in (None, Aircraft.ANKA3.value):
+            raise PresetError(f"Geçersiz config profili: {profile}")
+        parts = [software.value]
+        if profile:
+            parts.append(profile)
+        parts.append(station)
+        return "/".join(parts)
 
     def _read_index(self) -> dict[str, str]:
         if not self._index_path.exists():
@@ -34,20 +41,24 @@ class PresetStore:
     def list(self) -> dict[str, Path]:
         return {key: self.root / relative for key, relative in self._read_index().items()}
 
-    def get(self, software: Software, station: str) -> Path | None:
-        relative = self._read_index().get(self._key(software, station))
+    def get(self, software: Software, station: str, profile: str | None = None) -> Path | None:
+        relative = self._read_index().get(self._key(software, station, profile))
         if not relative:
             return None
         path = self.root / relative
         return path if path.is_dir() else None
 
-    def save(self, software: Software, station: str, source: Path) -> Path:
+    def save(self, software: Software, station: str, source: Path, profile: str | None = None) -> Path:
         source = Path(source)
         if not source.is_dir():
             raise PresetError(f"Config klasörü bulunamadı: {source}")
-        key = self._key(software, station)
-        validate_config_preset(software, source, f"{software.value}/{station} ön ayarı")
-        destination = self.root / "configs" / software.value / station
+        key = self._key(software, station, profile)
+        label = "/".join(part for part in (software.value, profile, station) if part)
+        validate_config_preset(software, source, f"{label} ön ayarı")
+        destination = self.root / "configs" / software.value
+        if profile:
+            destination /= profile
+        destination /= station
         destination.parent.mkdir(parents=True, exist_ok=True)
         temporary = Path(tempfile.mkdtemp(prefix=f".{station}-", dir=destination.parent))
         backup = destination.with_name(f".{destination.name}.backup")

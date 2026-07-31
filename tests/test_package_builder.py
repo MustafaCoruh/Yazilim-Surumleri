@@ -54,8 +54,13 @@ def test_output_names():
 
 def prepare(tmp_path: Path, software: Software):
     store = PresetStore(tmp_path / "data")
-    for station in output_stations(software, DEFAULT_STATIONS):
-        store.save(software, station, config(tmp_path / f"source-{station}"))
+    profiles = (None, "ANKA3")
+    for profile in profiles:
+        for station in output_stations(software, DEFAULT_STATIONS, profile):
+            suffix = f"-{profile}" if profile else ""
+            source = config(tmp_path / f"source-{station}{suffix}")
+            (source / "profile.txt").write_text(profile or "STANDARD", encoding="utf-8")
+            store.save(software, station, source, profile)
     binary = tmp_path / "bin_2.5.1"
     binary.mkdir()
     (binary / "program.exe").write_bytes(b"exe")
@@ -174,6 +179,60 @@ def test_dm_and_aky_use_one_common_syki_preset(tmp_path):
         outputs = PackageBuilder(store).build(request)
         assert len(outputs) == 1
         assert outputs[0].name.endswith("_SYKI1-2")
+
+
+def test_anka3_uses_its_separate_config_preset(tmp_path):
+    store, binary = prepare(tmp_path, Software.AKY)
+
+    standard = PackageBuilder(store).build(
+        BuildRequest(Software.AKY, binary, tmp_path / "standard", Aircraft.ANKA, stations=("SYKI1-2",))
+    )[0]
+    anka3 = PackageBuilder(store).build(
+        BuildRequest(Software.AKY, binary, tmp_path / "anka3", Aircraft.ANKA3, stations=("SYKI1",))
+    )[0]
+
+    assert (standard / "config" / "profile.txt").read_text(encoding="utf-8") == "STANDARD"
+    assert (anka3 / "config" / "profile.txt").read_text(encoding="utf-8") == "ANKA3"
+
+
+def test_anka3_does_not_fall_back_to_standard_aky_preset(tmp_path):
+    store = PresetStore(tmp_path / "data")
+    store.save(Software.AKY, "SYKI1", config(tmp_path / "standard"))
+    binary = tmp_path / "bin_1.0"
+    binary.mkdir()
+
+    with pytest.raises(PresetError, match="ANKA3/SYKI1"):
+        PackageBuilder(store).build(
+            BuildRequest(Software.AKY, binary, tmp_path / "out", Aircraft.ANKA3, stations=("SYKI1",))
+        )
+
+
+@pytest.mark.parametrize("software", list(Software))
+def test_anka3_profile_is_separate_for_every_software_and_only_supports_syki(tmp_path, software):
+    store, binary = prepare(tmp_path, software)
+    aircraft = Aircraft.ANKA3 if software is Software.AKY else None
+    outputs = PackageBuilder(store).build(
+        BuildRequest(software, binary, tmp_path / "out", aircraft, profile="ANKA3")
+    )
+
+    assert {output.name.rsplit("_", 1)[-1] for output in outputs} == {"SYKI1", "SYKI2"}
+    assert all((output / "config" / "profile.txt").read_text(encoding="utf-8") == "ANKA3" for output in outputs)
+
+
+def test_anka3_profile_rejects_unsupported_myki_selection(tmp_path):
+    store, binary = prepare(tmp_path, Software.SYY)
+    with pytest.raises(ValidationError, match="Geçersiz çıktı YKİ seçimi: MYKI19"):
+        PackageBuilder(store).build(
+            BuildRequest(Software.SYY, binary, tmp_path / "out", stations=("MYKI19",), profile="ANKA3")
+        )
+
+
+def test_unknown_config_profile_is_rejected(tmp_path):
+    store, binary = prepare(tmp_path, Software.DM)
+    with pytest.raises(ValidationError, match="Geçersiz config profili"):
+        PackageBuilder(store).build(
+            BuildRequest(Software.DM, binary, tmp_path / "out", profile="UNKNOWN")
+        )
 
 
 def test_dynamic_station_store_and_output_model(tmp_path):

@@ -6,7 +6,7 @@ import tempfile
 from pathlib import Path
 
 from .errors import PresetError, ValidationError
-from .models import DEFAULT_STATIONS, BuildRequest, Software, output_stations
+from .models import DEFAULT_STATIONS, BuildRequest, Software, output_stations, preset_profile
 from .presets import PresetStore
 from .xml_config import configure_package
 
@@ -37,10 +37,13 @@ class PackageBuilder:
 
     def build(self, request: BuildRequest) -> list[Path]:
         version = version_from_bin(request.bin_directory)
+        if request.profile not in (None, "ANKA3"):
+            raise ValidationError(f"Geçersiz config profili: {request.profile}")
         if request.software is Software.AKY and request.aircraft is None:
             raise ValidationError("AKY için hava aracı seçilmelidir.")
         request.output_directory.mkdir(parents=True, exist_ok=True)
-        available = output_stations(request.software, self.stations)
+        profile = preset_profile(request.aircraft, request.profile)
+        available = output_stations(request.software, self.stations, profile)
         selected = request.stations or available
         if len(selected) != len(set(selected)):
             raise ValidationError("Aynı YKİ birden fazla kez seçilemez.")
@@ -50,9 +53,9 @@ class PackageBuilder:
         jobs: list[tuple[str, Path]] = []
         missing: list[str] = []
         for output_station in selected:
-            preset = self.presets.get(request.software, output_station)
+            preset = self.presets.get(request.software, output_station, profile)
             if preset is None:
-                missing.append(output_station)
+                missing.append(f"{profile}/{output_station}" if profile else output_station)
                 continue
             jobs.append((package_name(request.software, version, output_station, request.aircraft), preset))
         if missing:
