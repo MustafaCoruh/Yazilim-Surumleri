@@ -24,11 +24,11 @@ AIRCRAFT_BLOCK_TYPES = {
     Aircraft.AKSUNGUR: "YFYK",
     Aircraft.ANKA3: "ANKA3",
 }
-PRESET_PROFILES: tuple[str, ...] = ("Standart", "ANKA3")
+AIRCRAFT_CONFIG_GROUPS: tuple[str, ...] = ("ANKA / AKSUNGUR", "ANKA3")
 
 
-def preset_profile(aircraft: Aircraft | None, requested_profile: str | None = None) -> str | None:
-    if aircraft is Aircraft.ANKA3 or requested_profile == Aircraft.ANKA3.value:
+def preset_profile(aircraft: Aircraft | None) -> str | None:
+    if aircraft is Aircraft.ANKA3:
         return Aircraft.ANKA3.value
     return None
 
@@ -51,4 +51,3 @@ class BuildRequest:
     aircraft: Aircraft | None = None
     stations: tuple[str, ...] = ()
     create_zip: bool = False
-    profile: str | None = None

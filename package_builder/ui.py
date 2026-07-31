@@ -10,7 +10,7 @@ from tkinter import filedialog, messagebox, ttk
 from .builder import PackageBuilder
 from .errors import PackageError
 from .icon import ICON_PNG_BASE64
-from .models import PRESET_PROFILES, Aircraft, BuildRequest, Software, output_stations
+from .models import AIRCRAFT_CONFIG_GROUPS, Aircraft, BuildRequest, Software, output_stations
 from .presets import PresetStore
 from .settings import StationStore
 
@@ -68,14 +68,13 @@ class Application(tk.Tk):
         bin_path = tk.StringVar()
         output_path = tk.StringVar()
         output_station = tk.StringVar(value="Tümü")
-        config_profile = tk.StringVar(value=PRESET_PROFILES[0])
 
-        ttk.Label(form, text="Yazılım").grid(row=0, column=0, sticky="w", padx=(0, 16), pady=9)
+        ttk.Label(form, text="Hava aracı").grid(row=0, column=0, sticky="w", padx=(0, 16), pady=9)
+        aircraft_box = ttk.Combobox(form, textvariable=aircraft, values=[x.value for x in Aircraft], state="readonly")
+        aircraft_box.grid(row=0, column=1, sticky="ew", pady=9)
+        ttk.Label(form, text="Yazılım").grid(row=1, column=0, sticky="w", padx=(0, 16), pady=9)
         software_box = ttk.Combobox(form, textvariable=software, values=[x.value for x in Software], state="readonly")
-        software_box.grid(row=0, column=1, sticky="ew", pady=9)
-        ttk.Label(form, text="Hava aracı").grid(row=1, column=0, sticky="w", padx=(0, 16), pady=9)
-        aircraft_box = ttk.Combobox(form, textvariable=aircraft, values=[x.value for x in Aircraft], state="disabled")
-        aircraft_box.grid(row=1, column=1, sticky="ew", pady=9)
+        software_box.grid(row=1, column=1, sticky="ew", pady=9)
         ttk.Label(form, text="Bin klasörü").grid(row=2, column=0, sticky="w", padx=(0, 16), pady=9)
         ttk.Entry(form, textvariable=bin_path, state="readonly").grid(row=2, column=1, sticky="ew", pady=9)
         ttk.Button(form, text="Seç…", command=lambda: bin_path.set(filedialog.askdirectory() or bin_path.get())).grid(row=2, column=2, padx=(10, 0), pady=9)
@@ -85,31 +84,21 @@ class Application(tk.Tk):
         ttk.Label(form, text="Üretilecek YKİ").grid(row=4, column=0, sticky="w", padx=(0, 16), pady=9)
         station_box = ttk.Combobox(form, textvariable=output_station, state="readonly")
         station_box.grid(row=4, column=1, sticky="ew", pady=9)
-        ttk.Label(form, text="Config profili").grid(row=5, column=0, sticky="w", padx=(0, 16), pady=9)
-        config_profile_box = ttk.Combobox(form, textvariable=config_profile, values=PRESET_PROFILES, state="readonly")
-        config_profile_box.grid(row=5, column=1, sticky="ew", pady=9)
         form.columnconfigure(1, weight=1)
 
         def active_profile() -> str | None:
-            if software.get() == Software.AKY.value:
-                return "ANKA3" if aircraft.get() == Aircraft.ANKA3.value else None
-            return "ANKA3" if config_profile.get() == "ANKA3" else None
+            return "ANKA3" if aircraft.get() == Aircraft.ANKA3.value else None
 
         def refresh_outputs(*_) -> None:
             choices = output_stations(Software(software.get()), self.station_store.list(), active_profile())
             station_box.configure(values=("Tümü",) + choices)
             output_station.set("Tümü")
 
-        def software_changed(*_) -> None:
-            is_aky = software.get() == Software.AKY.value
-            aircraft_box.configure(state="readonly" if is_aky else "disabled")
-            config_profile_box.configure(state="disabled" if is_aky else "readonly")
-            config_profile.set("ANKA3" if is_aky and aircraft.get() == Aircraft.ANKA3.value else PRESET_PROFILES[0])
+        def selection_changed(*_) -> None:
             refresh_outputs()
-        software.trace_add("write", software_changed)
-        aircraft.trace_add("write", lambda *_: software_changed() if software.get() == Software.AKY.value else None)
-        config_profile.trace_add("write", refresh_outputs)
-        software_changed()
+        software.trace_add("write", selection_changed)
+        aircraft.trace_add("write", selection_changed)
+        selection_changed()
         status = tk.StringVar(value="Hazır")
         progress = ttk.Progressbar(frame, mode="indeterminate")
 
@@ -126,8 +115,7 @@ class Application(tk.Tk):
             selected = choices if output_station.get() == "Tümü" else (output_station.get(),)
             create_zip = messagebox.askyesno("ZIP oluşturulsun mu?", "Normal klasörlere ek olarak ZIP çıktıları da oluşturulsun mu?")
             request = BuildRequest(Software(software.get()), Path(bin_path.get()), Path(output_path.get()),
-                                   Aircraft(aircraft.get()) if software.get() == Software.AKY.value else None,
-                                   selected, create_zip, profile_key)
+                                   Aircraft(aircraft.get()), selected, create_zip)
             def worker() -> None:
                 try:
                     outputs = PackageBuilder(self.store, self.station_store.list()).build(request)
@@ -155,17 +143,17 @@ class Application(tk.Tk):
                      "Paket Oluştur", self._show_builder)
         software = tk.StringVar(value=Software.SYY.value)
         station = tk.StringVar()
-        profile = tk.StringVar(value=PRESET_PROFILES[0])
+        profile = tk.StringVar(value=AIRCRAFT_CONFIG_GROUPS[0])
         controls = ttk.Frame(frame)
         controls.pack(fill="x", pady=(0, 15))
-        ttk.Label(controls, text="Yazılım").grid(row=0, column=0, sticky="w", pady=5)
-        ttk.Combobox(controls, textvariable=software, values=[x.value for x in Software], state="readonly", width=14).grid(row=0, column=1, sticky="w", padx=(8, 24), pady=5)
-        ttk.Label(controls, text="YKİ").grid(row=0, column=2, sticky="w", pady=5)
+        ttk.Label(controls, text="Hava aracı grubu").grid(row=0, column=0, sticky="w", pady=5)
+        profile_box = ttk.Combobox(controls, textvariable=profile, values=AIRCRAFT_CONFIG_GROUPS, state="readonly", width=18)
+        profile_box.grid(row=0, column=1, sticky="w", padx=(8, 24), pady=5)
+        ttk.Label(controls, text="Yazılım").grid(row=0, column=2, sticky="w", pady=5)
+        ttk.Combobox(controls, textvariable=software, values=[x.value for x in Software], state="readonly", width=14).grid(row=0, column=3, sticky="w", padx=8, pady=5)
+        ttk.Label(controls, text="YKİ").grid(row=1, column=0, sticky="w", pady=5)
         station_box = ttk.Combobox(controls, textvariable=station, state="readonly", width=14)
-        station_box.grid(row=0, column=3, sticky="w", padx=8, pady=5)
-        ttk.Label(controls, text="Config profili").grid(row=1, column=0, sticky="w", pady=5)
-        profile_box = ttk.Combobox(controls, textvariable=profile, values=PRESET_PROFILES, state="readonly", width=18)
-        profile_box.grid(row=1, column=1, sticky="w", padx=(8, 24), pady=5)
+        station_box.grid(row=1, column=1, sticky="w", padx=(8, 24), pady=5)
         tree = ttk.Treeview(frame, columns=("software", "profile", "station", "path"), show="headings", height=12)
         for column, title, width in (("software", "Yazılım", 70), ("profile", "Profil", 120), ("station", "YKİ", 90), ("path", "Kalıcı konum", 390)):
             tree.heading(column, text=title)
@@ -176,7 +164,7 @@ class Application(tk.Tk):
             tree.delete(*tree.get_children())
             entries = self.store.list()
             for sw in Software:
-                for current_profile in PRESET_PROFILES:
+                for current_profile in AIRCRAFT_CONFIG_GROUPS:
                     key_profile = "ANKA3" if current_profile == "ANKA3" else None
                     for st in output_stations(sw, self.station_store.list(), key_profile):
                         key = "/".join(part for part in (sw.value, key_profile, st) if part)

@@ -37,12 +37,10 @@ class PackageBuilder:
 
     def build(self, request: BuildRequest) -> list[Path]:
         version = version_from_bin(request.bin_directory)
-        if request.profile not in (None, "ANKA3"):
-            raise ValidationError(f"Geçersiz config profili: {request.profile}")
-        if request.software is Software.AKY and request.aircraft is None:
-            raise ValidationError("AKY için hava aracı seçilmelidir.")
+        if request.aircraft is None:
+            raise ValidationError("Hava aracı seçilmelidir.")
         request.output_directory.mkdir(parents=True, exist_ok=True)
-        profile = preset_profile(request.aircraft, request.profile)
+        profile = preset_profile(request.aircraft)
         available = output_stations(request.software, self.stations, profile)
         selected = request.stations or available
         if len(selected) != len(set(selected)):

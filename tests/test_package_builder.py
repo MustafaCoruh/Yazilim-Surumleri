@@ -70,7 +70,7 @@ def prepare(tmp_path: Path, software: Software):
 @pytest.mark.parametrize("software,count", [(Software.SYY, 5), (Software.DM, 4)])
 def test_end_to_end_paths_and_allowed_fields(tmp_path, software, count):
     store, binary = prepare(tmp_path, software)
-    outputs = PackageBuilder(store).build(BuildRequest(software, binary, tmp_path / "out"))
+    outputs = PackageBuilder(store).build(BuildRequest(software, binary, tmp_path / "out", Aircraft.ANKA))
     assert len(outputs) == count
     assert any("SYKI1-2" in output.name for output in outputs) == (software is Software.DM)
     target = outputs[0]
@@ -103,12 +103,12 @@ def test_missing_preset_and_collision(tmp_path):
     binary = tmp_path / "bin_1.0"
     binary.mkdir()
     with pytest.raises(PresetError, match="eksik config"):
-        PackageBuilder(store).build(BuildRequest(Software.SYY, binary, tmp_path / "out"))
+        PackageBuilder(store).build(BuildRequest(Software.SYY, binary, tmp_path / "out", Aircraft.ANKA))
     store, binary = prepare(tmp_path / "second", Software.SYY)
     out = tmp_path / "second" / "out"
     (out / "SYY_2.5.1_SYKI1").mkdir(parents=True)
     with pytest.raises(ValidationError, match="ezilmeyecek"):
-        PackageBuilder(store).build(BuildRequest(Software.SYY, binary, out))
+        PackageBuilder(store).build(BuildRequest(Software.SYY, binary, out, Aircraft.ANKA))
 
 
 @pytest.mark.parametrize("mode", ["missing", "duplicate"])
@@ -120,7 +120,7 @@ def test_xml_exactly_once(tmp_path, mode):
     text = text.replace(needle, "" if mode == "missing" else needle + needle)
     (preset / "UserConfiguration").write_text(text, encoding="utf-8")
     with pytest.raises(XmlConfigurationError, match="ConfigFileLocation"):
-        PackageBuilder(store).build(BuildRequest(Software.DM, binary, tmp_path / "out"))
+        PackageBuilder(store).build(BuildRequest(Software.DM, binary, tmp_path / "out", Aircraft.ANKA))
     assert not list((tmp_path / "out").glob("DM_*"))
 
 
@@ -159,7 +159,7 @@ def test_single_station_selection_and_optional_zip(tmp_path):
     output = tmp_path / "out"
 
     results = PackageBuilder(store).build(
-        BuildRequest(Software.SYY, binary, output, stations=("MYKI19",), create_zip=True)
+        BuildRequest(Software.SYY, binary, output, Aircraft.ANKA, stations=("MYKI19",), create_zip=True)
     )
 
     assert [path.name for path in results] == ["SYY_2.5.1_MYKI19"]
@@ -173,7 +173,7 @@ def test_dm_and_aky_use_one_common_syki_preset(tmp_path):
         store, binary = prepare(tmp_path / software.value, software)
         request = BuildRequest(
             software, binary, tmp_path / software.value / "out",
-            Aircraft.ANKA if software is Software.AKY else None,
+            Aircraft.ANKA,
             stations=("SYKI1-2",),
         )
         outputs = PackageBuilder(store).build(request)
@@ -210,9 +210,8 @@ def test_anka3_does_not_fall_back_to_standard_aky_preset(tmp_path):
 @pytest.mark.parametrize("software", list(Software))
 def test_anka3_profile_is_separate_for_every_software_and_only_supports_syki(tmp_path, software):
     store, binary = prepare(tmp_path, software)
-    aircraft = Aircraft.ANKA3 if software is Software.AKY else None
     outputs = PackageBuilder(store).build(
-        BuildRequest(software, binary, tmp_path / "out", aircraft, profile="ANKA3")
+        BuildRequest(software, binary, tmp_path / "out", Aircraft.ANKA3)
     )
 
     assert {output.name.rsplit("_", 1)[-1] for output in outputs} == {"SYKI1", "SYKI2"}
@@ -223,16 +222,28 @@ def test_anka3_profile_rejects_unsupported_myki_selection(tmp_path):
     store, binary = prepare(tmp_path, Software.SYY)
     with pytest.raises(ValidationError, match="Geçersiz çıktı YKİ seçimi: MYKI19"):
         PackageBuilder(store).build(
-            BuildRequest(Software.SYY, binary, tmp_path / "out", stations=("MYKI19",), profile="ANKA3")
+            BuildRequest(Software.SYY, binary, tmp_path / "out", Aircraft.ANKA3, stations=("MYKI19",))
         )
 
 
-def test_unknown_config_profile_is_rejected(tmp_path):
-    store, binary = prepare(tmp_path, Software.DM)
-    with pytest.raises(ValidationError, match="Geçersiz config profili"):
+@pytest.mark.parametrize("software", list(Software))
+def test_missing_aircraft_is_rejected_for_every_software(tmp_path, software):
+    store, binary = prepare(tmp_path, software)
+    with pytest.raises(ValidationError, match="Hava aracı seçilmelidir"):
         PackageBuilder(store).build(
-            BuildRequest(Software.DM, binary, tmp_path / "out", profile="UNKNOWN")
+            BuildRequest(software, binary, tmp_path / "out")
         )
+
+
+@pytest.mark.parametrize("software", list(Software))
+def test_anka_and_aksungur_share_the_same_config_group(tmp_path, software):
+    store, binary = prepare(tmp_path, software)
+    station = output_stations(software, DEFAULT_STATIONS)[0]
+    for aircraft in (Aircraft.ANKA, Aircraft.AKSUNGUR):
+        output = PackageBuilder(store).build(
+            BuildRequest(software, binary, tmp_path / aircraft.value, aircraft, stations=(station,))
+        )[0]
+        assert (output / "config" / "profile.txt").read_text(encoding="utf-8") == "STANDARD"
 
 
 def test_dynamic_station_store_and_output_model(tmp_path):
@@ -253,7 +264,7 @@ def test_existing_zip_is_not_overwritten(tmp_path):
 
     with pytest.raises(ValidationError, match="ZIP çıktıları ezilmeyecek"):
         PackageBuilder(store).build(
-            BuildRequest(Software.SYY, binary, output, stations=("MYKI20",), create_zip=True)
+            BuildRequest(Software.SYY, binary, output, Aircraft.ANKA, stations=("MYKI20",), create_zip=True)
         )
 
     assert existing.read_bytes() == b"keep"
