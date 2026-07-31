@@ -12,3 +12,7 @@ class PresetError(PackageError):
 
 class XmlConfigurationError(PackageError):
     pass
+
+
+class PackageWarning(UserWarning):
+    pass

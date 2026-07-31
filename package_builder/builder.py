@@ -3,9 +3,10 @@ from __future__ import annotations
 import re
 import shutil
 import tempfile
+import warnings
 from pathlib import Path
 
-from .errors import PresetError, ValidationError
+from .errors import PackageWarning, ValidationError
 from .models import DEFAULT_STATIONS, BuildRequest, Software, output_stations, preset_profile
 from .presets import PresetStore
 from .xml_config import configure_package
@@ -57,9 +58,11 @@ class PackageBuilder:
                 continue
             jobs.append((package_name(request.software, version, output_station, request.aircraft), preset))
         if missing:
-            raise PresetError(
+            warnings.warn(
                 f"{request.software.value} için eksik config ön ayarları: {', '.join(missing)}. "
-                "Ön Ayar Yönetimi ekranından yükleyin."
+                "Bu çıktılar atlandı; Ön Ayar Yönetimi ekranından yükleyin.",
+                PackageWarning,
+                stacklevel=2,
             )
         collisions = [name for name, _ in jobs if (request.output_directory / name).exists()]
         if collisions:

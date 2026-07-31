@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 import pytest
 
 from package_builder.builder import PackageBuilder, package_name, version_from_bin
-from package_builder.errors import PresetError, ValidationError, XmlConfigurationError
+from package_builder.errors import PackageWarning, ValidationError
 from package_builder.models import DEFAULT_STATIONS, Aircraft, BuildRequest, Software, output_stations
 from package_builder.presets import PresetStore
 from package_builder.settings import StationStore
@@ -102,8 +102,9 @@ def test_missing_preset_and_collision(tmp_path):
     store = PresetStore(tmp_path / "data")
     binary = tmp_path / "bin_1.0"
     binary.mkdir()
-    with pytest.raises(PresetError, match="eksik config"):
-        PackageBuilder(store).build(BuildRequest(Software.SYY, binary, tmp_path / "out", Aircraft.ANKA))
+    with pytest.warns(PackageWarning, match="eksik config"):
+        outputs = PackageBuilder(store).build(BuildRequest(Software.SYY, binary, tmp_path / "out", Aircraft.ANKA))
+    assert outputs == []
     store, binary = prepare(tmp_path / "second", Software.SYY)
     out = tmp_path / "second" / "out"
     (out / "SYY_2.5.1_SYKI1").mkdir(parents=True)
@@ -119,9 +120,9 @@ def test_xml_exactly_once(tmp_path, mode):
     needle = '<add key="ConfigFileLocation" value="old-c"/>'
     text = text.replace(needle, "" if mode == "missing" else needle + needle)
     (preset / "UserConfiguration").write_text(text, encoding="utf-8")
-    with pytest.raises(XmlConfigurationError, match="ConfigFileLocation"):
-        PackageBuilder(store).build(BuildRequest(Software.DM, binary, tmp_path / "out", Aircraft.ANKA))
-    assert not list((tmp_path / "out").glob("DM_*"))
+    with pytest.warns(PackageWarning, match="ConfigFileLocation"):
+        outputs = PackageBuilder(store).build(BuildRequest(Software.DM, binary, tmp_path / "out", Aircraft.ANKA))
+    assert len(outputs) == 4
 
 
 @pytest.mark.parametrize("encoding,bom", [("utf-8-sig", b"\xef\xbb\xbf"), ("utf-16", b"\xff\xfe")])
@@ -174,16 +175,30 @@ def test_nested_xml_value_element_is_read_and_updated(tmp_path):
     assert value.text.endswith(r"\GainsParamsTable_MessageTable_8.2.csv")
 
 
-def test_invalid_preset_is_rejected_before_being_saved(tmp_path):
+def test_missing_gains_filename_warns_and_other_syy_fields_continue(tmp_path):
+    directory = config(tmp_path / "config")
+    app = directory / "AppSettings.xml"
+    app.write_text(APP.replace("GainsParamsTable_MessageTable_7.41.csv", "unknown.csv"), encoding="utf-8")
+
+    with pytest.warns(PackageWarning, match="gains dosya adı bulunamadı"):
+        configure_package(Software.SYY, directory, "SYY_1.0_SYKI1", "bin_1.0", None)
+
+    updated = values(app)
+    assert updated["GainsFilePath"].endswith("unknown.csv")
+    assert updated["UILayoutsFolder"].endswith(r"\config\UILayoutsFolder")
+    assert updated["HandoverSettingsFilePath"].endswith(r"\config")
+
+
+def test_incomplete_preset_is_saved_with_a_warning(tmp_path):
     source = config(tmp_path / "source")
     user = source / "UserConfiguration"
     user.write_text(USER.replace('<add key="LogFilesLocation" value="old-l"/>', ""), encoding="utf-8")
     store = PresetStore(tmp_path / "data")
 
-    with pytest.raises(XmlConfigurationError, match="DM/SYKI1 ön ayarı.*LogFilesLocation"):
+    with pytest.warns(PackageWarning, match="DM/SYKI1 ön ayarı.*LogFilesLocation"):
         store.save(Software.DM, "SYKI1", source)
 
-    assert store.get(Software.DM, "SYKI1") is None
+    assert store.get(Software.DM, "SYKI1") is not None
 
 
 def test_single_station_selection_and_optional_zip(tmp_path):
@@ -233,10 +248,11 @@ def test_anka3_does_not_fall_back_to_standard_aky_preset(tmp_path):
     binary = tmp_path / "bin_1.0"
     binary.mkdir()
 
-    with pytest.raises(PresetError, match="ANKA3/SYKI1"):
-        PackageBuilder(store).build(
+    with pytest.warns(PackageWarning, match="ANKA3/SYKI1"):
+        outputs = PackageBuilder(store).build(
             BuildRequest(Software.AKY, binary, tmp_path / "out", Aircraft.ANKA3, stations=("SYKI1",))
         )
+    assert outputs == []
 
 
 @pytest.mark.parametrize("software", list(Software))

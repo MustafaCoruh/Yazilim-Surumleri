@@ -4,11 +4,12 @@ import os
 import threading
 import tkinter as tk
 import tkinter.font as tkfont
+import warnings
 from pathlib import Path
 from tkinter import filedialog, messagebox, ttk
 
 from .builder import PackageBuilder
-from .errors import PackageError
+from .errors import PackageError, PackageWarning
 from .icon import ICON_PNG_BASE64
 from .models import AIRCRAFT_CONFIG_GROUPS, Aircraft, BuildRequest, Software, output_stations
 from .presets import PresetStore
@@ -118,11 +119,16 @@ class Application(tk.Tk):
                                    Aircraft(aircraft.get()), selected, create_zip)
             def worker() -> None:
                 try:
-                    outputs = PackageBuilder(self.store, self.station_store.list()).build(request)
+                    with warnings.catch_warnings(record=True) as caught:
+                        warnings.simplefilter("always", PackageWarning)
+                        outputs = PackageBuilder(self.store, self.station_store.list()).build(request)
                 except (PackageError, OSError) as exc:
                     self.after(0, lambda: messagebox.showerror("Paket oluşturulamadı", str(exc)))
                     self.after(0, lambda: status.set("Hata oluştu"))
                 else:
+                    warning_text = "\n\n".join(str(item.message) for item in caught)
+                    if warning_text:
+                        self.after(0, lambda text=warning_text: messagebox.showwarning("Uyarılar", text))
                     self.after(0, lambda: messagebox.showinfo("Tamamlandı", f"{len(outputs)} paket oluşturuldu."))
                     self.after(0, lambda: status.set("Paketler başarıyla oluşturuldu"))
                 finally:
@@ -177,12 +183,21 @@ class Application(tk.Tk):
                 return
             try:
                 selected_profile = "ANKA3" if profile.get() == "ANKA3" else None
-                self.store.save(Software(software.get()), station.get(), Path(source), selected_profile)
+                with warnings.catch_warnings(record=True) as caught:
+                    warnings.simplefilter("always", PackageWarning)
+                    self.store.save(Software(software.get()), station.get(), Path(source), selected_profile)
             except (PackageError, OSError) as exc:
                 messagebox.showerror("Ön ayar kaydedilemedi", str(exc))
             else:
                 refresh()
-                messagebox.showinfo("Kaydedildi", "Ön ayar kalıcı veri alanına kopyalandı.")
+                warning_text = "\n\n".join(str(item.message) for item in caught)
+                if warning_text:
+                    messagebox.showwarning(
+                        "Uyarıyla kaydedildi",
+                        "Ön ayar kalıcı veri alanına kopyalandı.\n\n" + warning_text,
+                    )
+                else:
+                    messagebox.showinfo("Kaydedildi", "Ön ayar kalıcı veri alanına kopyalandı.")
 
         ttk.Button(controls, text="YKİ Ayarları", command=self._show_settings).grid(row=1, column=2, padx=(0, 8), pady=5)
         ttk.Button(controls, text="Yükle / Güncelle…", style="Accent.TButton", command=save).grid(row=1, column=3, sticky="e", padx=8, pady=5)

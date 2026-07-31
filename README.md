@@ -31,6 +31,8 @@ SYY, DM ve AKY ön ayarları yüklenirken **Hava aracı grubu** alanından `ANKA
 
 SYY `GainsFilePath` değeri XML içinde `value` niteliğinde, doğrudan metin olarak veya iç içe `<value>` öğesinde bulunabilir. `GainsParamsTable_MessageTable_<sürüm>.csv` dosya adında büyük/küçük harf ve yol sonundaki boşluk farkları kabul edilir; config'te bulunan gerçek dosya adı pakete aynen taşınır.
 
+Config dosyası, beklenen XML alanı, gains dosya adı veya seçilen bir ön ayar bulunamazsa işlem artık tamamen iptal edilmez. Uygulama bulunan paketleri üretmeye devam eder, bulunamayan alanı değiştirmeden veya eksik ön ayara ait çıktıyı atlayarak kullanıcıya toplu **Uyarılar** penceresi gösterir. Geçersiz bin adı ve mevcut çıktı çakışması gibi güvenli üretimi imkânsız kılan durumlar hata olarak kalır.
+
 ## Yeni YKİ ekleme
 
 **Ön Ayar Yönetimi → YKİ Ayarları** ekranında yeni YKİ adını girip **Ekle** düğmesine basın. Yeni YKİ, SYY/DM/AKY ön ayar listelerine ve üretim seçeneklerine otomatik eklenir. `SYKI`, `MYK19` ve sistemin ortak çıktı adı olan `SYKI1-2` yeni YKİ adı olarak kabul edilmez.
