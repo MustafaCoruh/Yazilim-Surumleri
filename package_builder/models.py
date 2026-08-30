@@ -37,7 +37,9 @@ def output_stations(
     software: Software, stations: tuple[str, ...], profile: str | None = None,
 ) -> tuple[str, ...]:
     if profile == Aircraft.ANKA3.value:
-        return tuple(station for station in ("SYKI1", "SYKI2") if station in stations)
+        if software is Software.SYY:
+            return tuple(station for station in ("SYKI1", "SYKI2") if station in stations)
+        return (COMMON_SYKI,)
     if software is Software.SYY:
         return stations
     return (COMMON_SYKI,) + tuple(station for station in stations if station not in ("SYKI1", "SYKI2"))

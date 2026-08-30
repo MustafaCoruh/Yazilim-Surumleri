@@ -1,5 +1,6 @@
 from pathlib import Path
 import xml.etree.ElementTree as ET
+import warnings
 
 import pytest
 
@@ -175,14 +176,16 @@ def test_nested_xml_value_element_is_read_and_updated(tmp_path):
     assert value.text.endswith(r"\GainsParamsTable_MessageTable_8.2.csv")
 
 
-def test_missing_gains_filename_warns_and_other_syy_fields_continue(tmp_path):
+def test_missing_gains_filename_is_silent_and_other_syy_fields_continue(tmp_path):
     directory = config(tmp_path / "config")
     app = directory / "AppSettings.xml"
     app.write_text(APP.replace("GainsParamsTable_MessageTable_7.41.csv", "unknown.csv"), encoding="utf-8")
 
-    with pytest.warns(PackageWarning, match="gains dosya adı bulunamadı"):
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always", PackageWarning)
         configure_package(Software.SYY, directory, "SYY_1.0_SYKI1", "bin_1.0", None)
 
+    assert caught == []
     updated = values(app)
     assert updated["GainsFilePath"].endswith("unknown.csv")
     assert updated["UILayoutsFolder"].endswith(r"\config\UILayoutsFolder")
@@ -235,7 +238,7 @@ def test_anka3_uses_its_separate_config_preset(tmp_path):
         BuildRequest(Software.AKY, binary, tmp_path / "standard", Aircraft.ANKA, stations=("SYKI1-2",))
     )[0]
     anka3 = PackageBuilder(store).build(
-        BuildRequest(Software.AKY, binary, tmp_path / "anka3", Aircraft.ANKA3, stations=("SYKI1",))
+        BuildRequest(Software.AKY, binary, tmp_path / "anka3", Aircraft.ANKA3, stations=("SYKI1-2",))
     )[0]
 
     assert (standard / "config" / "profile.txt").read_text(encoding="utf-8") == "STANDARD"
@@ -244,13 +247,13 @@ def test_anka3_uses_its_separate_config_preset(tmp_path):
 
 def test_anka3_does_not_fall_back_to_standard_aky_preset(tmp_path):
     store = PresetStore(tmp_path / "data")
-    store.save(Software.AKY, "SYKI1", config(tmp_path / "standard"))
+    store.save(Software.AKY, "SYKI1-2", config(tmp_path / "standard"))
     binary = tmp_path / "bin_1.0"
     binary.mkdir()
 
-    with pytest.warns(PackageWarning, match="ANKA3/SYKI1"):
+    with pytest.warns(PackageWarning, match="ANKA3/SYKI1-2"):
         outputs = PackageBuilder(store).build(
-            BuildRequest(Software.AKY, binary, tmp_path / "out", Aircraft.ANKA3, stations=("SYKI1",))
+            BuildRequest(Software.AKY, binary, tmp_path / "out", Aircraft.ANKA3, stations=("SYKI1-2",))
         )
     assert outputs == []
 
@@ -262,7 +265,8 @@ def test_anka3_profile_is_separate_for_every_software_and_only_supports_syki(tmp
         BuildRequest(software, binary, tmp_path / "out", Aircraft.ANKA3)
     )
 
-    assert {output.name.rsplit("_", 1)[-1] for output in outputs} == {"SYKI1", "SYKI2"}
+    expected = {"SYKI1", "SYKI2"} if software is Software.SYY else {"SYKI1-2"}
+    assert {output.name.rsplit("_", 1)[-1] for output in outputs} == expected
     assert all((output / "config" / "profile.txt").read_text(encoding="utf-8") == "ANKA3" for output in outputs)
 
 

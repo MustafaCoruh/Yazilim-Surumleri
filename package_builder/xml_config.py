@@ -148,11 +148,6 @@ def validate_config_preset(software: Software, config: Path, label: str) -> None
         element = _optional_exact(app_root, field, label, app)
         if element is None:
             continue
-        if field == "GainsFilePath":
-            try:
-                _gains_filename(_read_value(element, field, label, app), label, app)
-            except XmlConfigurationError as exc:
-                warnings.warn(str(exc), PackageWarning, stacklevel=2)
 
 
 def _update(path: Path, values: dict[str, str], package: str) -> None:
@@ -219,8 +214,7 @@ def configure_package(
                 gains_filename = _gains_filename(
                     _read_value(gains_matches[0], "GainsFilePath", package_name, app), package_name, app,
                 )
-            except XmlConfigurationError as exc:
-                warnings.warn(str(exc), PackageWarning, stacklevel=2)
+            except XmlConfigurationError:
                 gains_filename = None
         app_values = {
             "UILayoutsFolder": f"{base}\\config\\UILayoutsFolder",

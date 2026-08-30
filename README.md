@@ -19,7 +19,7 @@ Kaynak giriş dosyası depo kökündeki `yazilim_surumleri.py` dosyasıdır. Pak
 ## Kullanım
 
 1. Uygulamayı açıp **Ön Ayar Yönetimi** ekranına geçin.
-2. Her yazılım ve YKİ çifti için doğrudan config klasörünü **Yükle / Güncelle** ile seçin. Her yazılımda `ANKA / AKSUNGUR` ortak config grubu ile `ANKA3` config grubu ayrı saklanır. ANKA ve AKSUNGUR aynı config'i kullanır. ANKA3 config'leri her yazılım için ayrıca yüklenir. Standart DM ve AKY için SYKI config'i tek `SYKI1-2` ön ayarı olarak yüklenir. ANKA3 yalnızca `SYKI1` ve `SYKI2` istasyonlarını destekler; MYKI ön ayarı gösterilmez ve üretilemez. Gerekli XML dosyaları ve alanları yükleme sırasında doğrulanır. Ön ayarlar `%LOCALAPPDATA%\TAI\YazilimSurumleri` altında kalıcı olarak tutulur; kaynak klasör sonradan gerekli değildir.
+2. Her yazılım ve YKİ çifti için doğrudan config klasörünü **Yükle / Güncelle** ile seçin. Her yazılımda `ANKA / AKSUNGUR` ortak config grubu ile `ANKA3` config grubu ayrı saklanır. ANKA ve AKSUNGUR aynı config'i kullanır. ANKA3 config'leri her yazılım için ayrıca yüklenir. ANKA3 için SYY'de `SYKI1` ve `SYKI2` ayrı; DM ve AKY'de yalnızca ortak `SYKI1-2` ön ayarı bulunur. ANKA3 için MYKI ön ayarı gösterilmez ve üretilemez. Gerekli XML dosyaları ve alanları yükleme sırasında doğrulanır. Ön ayarlar `%LOCALAPPDATA%\TAI\YazilimSurumleri` altında kalıcı olarak tutulur; kaynak klasör sonradan gerekli değildir.
 3. **Paket Oluştur** ekranında önce ANKA, AKSUNGUR veya ANKA3 hava aracını; ardından SYY, DM veya AKY yazılımını seçin. Hava aracı seçimi kullanılacak config grubunu otomatik belirler.
 4. Üretilecek YKİ listesinden tek bir YKİ veya **Tümü** seçeneğini belirleyin.
 5. Tam adı `bin_1.2.3` benzeri olan bin klasörünü ve boş bir çıktı konumunu seçip **Paketleri Oluştur** düğmesine basın.
@@ -27,11 +27,11 @@ Kaynak giriş dosyası depo kökündeki `yazilim_surumleri.py` dosyasıdır. Pak
 
 SYY her YKİ için ayrı paket üretir. DM ve AKY, tek `SYKI1-2` config ön ayarından ortak `SYKI1-2` paketi ve MYKI'lar için ayrı paketler üretir. Çıktılar her durumda normal klasördür; ZIP seçilirse aynı klasörlerin `.zip` kopyaları da oluşturulur. Eksik ön ayar ve mevcut klasör/ZIP çıktısı varsa işlem başlamadan açık bir hata gösterilir; mevcut çıktılar ezilmez.
 
-SYY, DM ve AKY ön ayarları yüklenirken **Hava aracı grubu** alanından `ANKA / AKSUNGUR` veya `ANKA3` seçilir. ANKA3 grubu seçildiğinde YKİ listesinde yalnızca `SYKI1` ve `SYKI2` bulunur. Paket ekranında ANKA3 hava aracı seçildiğinde yalnızca ilgili yazılımın ANKA3 grubuna yüklenen config kullanılır; ANKA/AKSUNGUR config'ine geri düşülmez.
+SYY, DM ve AKY ön ayarları yüklenirken **Hava aracı grubu** alanından `ANKA / AKSUNGUR` veya `ANKA3` seçilir. ANKA3 grubu seçildiğinde SYY için `SYKI1` ve `SYKI2`, DM ve AKY için yalnızca `SYKI1-2` bulunur. Paket ekranında ANKA3 hava aracı seçildiğinde yalnızca ilgili yazılımın ANKA3 grubuna yüklenen config kullanılır; ANKA/AKSUNGUR config'ine geri düşülmez.
 
-SYY `GainsFilePath` değeri XML içinde `value` niteliğinde, doğrudan metin olarak veya iç içe `<value>` öğesinde bulunabilir. `GainsParamsTable_MessageTable_<sürüm>.csv` dosya adında büyük/küçük harf ve yol sonundaki boşluk farkları kabul edilir; config'te bulunan gerçek dosya adı pakete aynen taşınır.
+SYY `GainsFilePath` değeri XML içinde `value` niteliğinde, doğrudan metin olarak veya iç içe `<value>` öğesinde bulunabilir. Değer içinde `GainsParamsTable_MessageTable_<sürüm>.csv` dosya adı bulunursa gerçek dosya adı korunarak paket yolu güncellenir. Bu kalıp bulunamazsa config yüklenirken uyarı verilmez ve paket üretiminde `GainsFilePath` değiştirilmeden bırakılır.
 
-Config dosyası, beklenen XML alanı, gains dosya adı veya seçilen bir ön ayar bulunamazsa işlem artık tamamen iptal edilmez. Uygulama bulunan paketleri üretmeye devam eder, bulunamayan alanı değiştirmeden veya eksik ön ayara ait çıktıyı atlayarak kullanıcıya toplu **Uyarılar** penceresi gösterir. Geçersiz bin adı ve mevcut çıktı çakışması gibi güvenli üretimi imkânsız kılan durumlar hata olarak kalır.
+Config dosyası, beklenen XML alanı veya seçilen bir ön ayar bulunamazsa işlem tamamen iptal edilmez. Uygulama bulunan paketleri üretmeye devam eder, bulunamayan alanı değiştirmeden veya eksik ön ayara ait çıktıyı atlayarak kullanıcıya toplu **Uyarılar** penceresi gösterir. Gains dosya kalıbının bulunamaması sessizce atlanır. Geçersiz bin adı ve mevcut çıktı çakışması gibi güvenli üretimi imkânsız kılan durumlar hata olarak kalır.
 
 ## Yeni YKİ ekleme
 
