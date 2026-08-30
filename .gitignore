@@ -7,4 +7,5 @@ dist/
 release/
 assets/*.ico
 assets/*.png
+*.docx
 *.spec

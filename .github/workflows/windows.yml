@@ -28,3 +28,11 @@ jobs:
           name: SurumIstasyonu-windows
           path: dist/SurumIstasyonu
           if-no-files-found: error
+      - name: Build Word documentation
+        run: python dokumanlar/docx_olustur.py
+      - name: Upload Word documentation
+        uses: actions/upload-artifact@v4
+        with:
+          name: SurumIstasyonu-dokumanlar
+          path: dokumanlar/*.docx
+          if-no-files-found: error

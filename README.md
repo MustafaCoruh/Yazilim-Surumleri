@@ -84,3 +84,7 @@ Geçici build çıktısı `dist\SurumIstasyonu` konumunda oluşur. GitHub Action
 Hedef bilgisayarda Python gerektirmeyen önerilen yöntem `release\SurumIstasyonu` klasörünü içeriğiyle birlikte aktarıp içindeki `SurumIstasyonu.exe` dosyasını çalıştırmaktır. `_internal` klasörü mutlaka EXE'nin yanında kalmalıdır. Kaynak klasörün tamamı aktarılacaksa `.venv`, `build` ve `dist` klasörlerini aktarmayın. Kaynak kodu `calistir.bat` ile çalıştırmak için hedef bilgisayarda Python 3.11 veya üstü kurulu olmalıdır.
 
 `No Python at ...` hatası, başka bilgisayarda oluşturulmuş `.venv` klasörünün taşındığını gösterir. `Failed to start embedded Python interpreter` hatası ise eski tek-dosyalık build'in geçici dizinde gömülü Python'u başlatamadığını gösterir. Güncel build klasörlü ve sıkıştırmasız üretildiğinden kurumsal güvenlik/antivirüs ortamlarında daha güvenilirdir. Eski `dist`, `build` ve `release` çıktılarını kullanmayın; `build_windows.bat` ile yeniden üretin.
+
+## Word dokümanları
+
+Projenin teknik açıklaması ve hiçbir ön bilgi gerektirmeyen ayrıntılı kullanım kılavuzu `dokumanlar` klasöründe kaynak olarak tutulur. PR sistemi binary Word dosyalarını kabul etmediği için `.docx` dosyaları Git'e eklenmez. Word belgelerini oluşturmak için `dokumanlar\word_dokumanlarini_olustur.bat` dosyasına çift tıklayın veya `python dokumanlar\docx_olustur.py` komutunu çalıştırın. GitHub Actions ayrıca iki Word belgesini `SurumIstasyonu-dokumanlar` adlı indirilebilir artefakt olarak üretir.
